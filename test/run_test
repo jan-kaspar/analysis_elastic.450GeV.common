@@ -241,7 +241,6 @@ rm -f "$report"
 	echo "<ul>"
 	echo "<li>starting test at: $(pwd -P)</li>"
 	echo "<li>reference directory: $reference_directory</li>"
-	echo "<li>test dataset: $ds</li>" >> "$report"
 ) >> "$report"
 
 # prepare environment
