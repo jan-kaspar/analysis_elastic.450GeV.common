@@ -2,7 +2,7 @@
 
 # defaults
 version=""
-n_repetitions="2"
+n_repetitions="5"
 models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
 
 input_version="version_TEST"
@@ -96,7 +96,7 @@ do
 		cd ..
 	done
 
-	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions &> "process_histograms.log" || exit 24
+	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions -binnings "$binnings" &> "process_histograms.log" || exit 24
 
 	$BASE_DIR/.simu_process_fits -seed-min 1 -seed-max $n_repetitions &> "process_fits.log" || exit 25
 
