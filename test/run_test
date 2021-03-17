@@ -83,7 +83,7 @@ function MainAnalysis()
 
 function Simu()
 {
-	./run_simu_chain -version "$simu_version" -repetitions 10 -models "$simu_model" || return 10
+	./run_simu_chain -version "$simu_version" -repetitions 5 -models "$simu_model" || return 10
 
 	echo "<li>OK</li>" >> "$report"
 
@@ -153,7 +153,8 @@ function SimuComparison()
 		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_H"
 		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_CH"
 
-		#MakeOneComparison "data/simu/$simu_version/$simu_model/seed$simu_seed/TODO.root" "TODO"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/seed_$simu_seed/histograms.root" "$simu_binning/low_beta/h_dsdt_cen_stat"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/seed_$simu_seed/histograms.root" "$simu_binning/high_beta/h_dsdt_cen_stat"
 
 		# TODO: add comparisons
 		#    - histogram with uncertainties, one model and one seed
@@ -184,6 +185,7 @@ function SimuComparison()
 input_version="version_TEST"
 simu_version="version_TEST"
 simu_seed="1"
+simu_binning="sb1"
 simu_model="exp1_con_rho0.10"
 
 steps="
