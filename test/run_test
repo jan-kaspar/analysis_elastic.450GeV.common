@@ -70,6 +70,17 @@ function Compilation()
 
 #----------------------------------------------------------------------------------------------------
 
+function MainAnalysis()
+{
+	./run_input_import -version "TEST" || return 10
+
+	echo "<li>OK</li>" >> "$report"
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
 function Simu()
 {
 	./run_simu_chain -version "$version_sel" -repetitions 10 -models "$model_sel" || return 10
@@ -186,6 +197,7 @@ steps="
  TodoCheck
  StaticAnalysisCheck
  Compilation
+ MainAnalysis
  Simu
  SimuComparison
 "
