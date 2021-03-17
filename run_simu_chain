@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# exit upon error
-set -e
-
 # defaults
 version=""
 n_repetitions="2"
@@ -13,9 +10,9 @@ function PrintUsage()
 {
 	echo "PrintUsage $0 <option> <option>"
 	echo "OPTIONS:"
-	echo "    -version <string>       set version tag"
+	echo "    -version <string>        set version tag"
 	echo "    -repetitions <integer>   number of repetitions to use"
-	echo "    -models <string>        space-separated list of models"
+	echo "    -models <string>         space-separated list of models"
 }
 
 while [ -n "$1" ]
@@ -57,7 +54,7 @@ topDir="data/simu/$version"
 mkdir -p "$topDir"
 cd "$topDir"
 
-$BASE_DIR/.simu_sample_models &> "models.log"
+$BASE_DIR/.simu_sample_models &> "models.log" || exit 21
 
 for model in $models
 do
@@ -69,16 +66,16 @@ do
 		mkdir -p "seed_$seed"
 		cd "seed_$seed"
 
-		$BASE_DIR/.simu_make_histograms &> "histograms.log"
+		$BASE_DIR/.simu_make_histograms &> "histograms.log" || exit 22
 
-		$BASE_DIR/.make_fit &> "fit.log"
+		$BASE_DIR/.make_fit &> "fit.log" || exit 23
 
 		cd ..
 	done
 
-	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions &> "process_histograms.log"
+	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions &> "process_histograms.log" || exit 24
 
-	$BASE_DIR/.simu_process_fits -seed-min 1 -seed-max $n_repetitions &> "process_fits.log"
+	$BASE_DIR/.simu_process_fits -seed-min 1 -seed-max $n_repetitions &> "process_fits.log" || exit 25
 
 	cd ..
 done
