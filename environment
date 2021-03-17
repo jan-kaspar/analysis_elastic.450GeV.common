@@ -24,17 +24,26 @@ export PS1="\[\033[00;34m\]${compName} \[\033[00;33m\]${CMSSW_VERSION}\[\033[00;
 
 export GSL_DIR="/cvmfs/cms.cern.ch/slc7_amd64_gcc820/external/gsl/2.2.1-pafccj2"
 
+export Elegent_DIR="/afs/cern.ch/work/j/jkaspar/work/software/Elegent/production/CMSSW_10_6_17/install"
+
+export HepMC_DIR="/cvmfs/cms.cern.ch/slc7_amd64_gcc820/external/hepmc/2.06.07-pafccj"
+
 export INCS="-isystem ${GSL_DIR}/include\
  -isystem ${CMSSW_BASE}/src -isystem ${CMSSW_RELEASE_BASE}/src \
  -isystem `root-config --incdir`\
+ -isystem $Elegent_DIR/include\
  -I$BASE_DIR"
 
 export LIBS="-L${GSL_DIR}/lib -lgsl -lgslcblas -lm\
  -L${CMSSW_BASE}/lib/$SCRAM_ARCH -L${CMSSW_RELEASE_BASE}/lib/$SCRAM_ARCH\
  -lDataFormatsFWLite -lDataFormatsCommon -lDataFormatsCTPPSDetId -lDataFormatsCTPPSReco -lFWCoreParameterSet -lFWCoreParameterSetReader -lFWCoreUtilities\
- `root-config --libs` -lMinuit"
+ `root-config --libs` -lMinuit\
+ -L$Elegent_DIR/lib -lElegent\
+ $HepMC_DIR/lib/libHepMC.a"
 
 export INCS_LIBS="$INCS $LIBS"
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Elegent_DIR/lib
 
 export GCC_OPT="-O2 -std=c++1z -fPIC -Wall -Wextra -Wno-attributes -g"
 export GCC_OPT_CLANG="-O2 -std=c++1z"
