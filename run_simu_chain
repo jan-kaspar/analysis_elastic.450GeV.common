@@ -49,6 +49,8 @@ then
 fi
 
 # execute
+make -j8 || exit 3
+
 topDir="data/simu/$version"
 
 mkdir -p "$topDir"
