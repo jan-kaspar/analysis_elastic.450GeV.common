@@ -1,3 +1,93 @@
 #!/bin/bash
 
+# defaults
+dir_low_beta="/afs/cern.ch/work/j/jkaspar/work/analyses/elastic/450GeV/beta11/4rp"
+dir_high_beta="/afs/cern.ch/work/j/jkaspar/work/analyses/elastic/450GeV/beta100/4rp"
 
+version=""
+binnings="sb1,sb2,sb3"
+
+# parse command line
+function PrintUsage()
+{
+	echo "PrintUsage $0 <option> <option>"
+	echo "OPTIONS:"
+	echo "    -version <string>        set version tag"
+	echo "    -binnings <string>       comma-separated list of binnings"
+}
+
+while [ -n "$1" ]
+do
+	case $1 in
+		"-version")
+			shift
+			version="$1"
+			;;
+		"-binnings")
+			shift
+			binnings="$1"
+			;;
+		*)
+			echo "ERROR: parameter '$1' not understood."
+			PrintUsage
+			exit 1
+			;;
+	esac
+
+	shift
+done
+
+# check input
+if [ -z "$version" ]
+then
+	echo "ERROR: version not defined."
+	PrintUsage
+	exit 2
+fi
+
+topDir="data/input/$version"
+
+if [ -d "$topDir" ]
+then
+	echo "ERROR: version directory already exists."
+	exit 3
+fi
+
+# execute
+make ".input_import" || exit 4
+
+mkdir -p "$topDir"
+
+(
+	echo "-------------------- low beta --------------------"
+
+	cd "$dir_low_beta"
+
+	echo ""
+	echo "* recent commits: "
+	git log --oneline | tail -n 5
+
+	echo ""
+	echo "* status: "
+	git status -uno
+
+	echo ""
+	echo "-------------------- high beta --------------------"
+
+	cd "$dir_high_beta"
+
+	echo ""
+	echo "* recent commits: "
+	git log --oneline | tail -n 5
+
+	echo ""
+	echo "* status: "
+	git status -uno
+
+	echo ""
+	echo "-------------------- import --------------------"
+
+	cd "$BASE_DIR/$topDir"
+	$BASE_DIR/.input_import -dir-low-beta "$dir_low_beta" -dir-high-beta "$dir_high_beta" -binnings "$binnings"
+
+) &> "$topDir/import.log"
