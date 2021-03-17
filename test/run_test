@@ -72,7 +72,7 @@ function Compilation()
 
 function MainAnalysis()
 {
-	./run_input_import -version "TEST" || return 10
+	./run_input_import -version "$input_version" || return 10
 
 	echo "<li>OK</li>" >> "$report"
 
@@ -83,7 +83,7 @@ function MainAnalysis()
 
 function Simu()
 {
-	./run_simu_chain -version "$version_sel" -repetitions 10 -models "$model_sel" || return 10
+	./run_simu_chain -version "$simu_version" -repetitions 10 -models "$simu_model" || return 10
 
 	echo "<li>OK</li>" >> "$report"
 
@@ -106,13 +106,8 @@ function MakeOneComparison()
 	local obj="$2"
 	local options="$3"
 
-	local file1="./data/$ds/$file"
-	local file2="$reference_directory/data/$ds/$file"
-	if [ "$options" == "global" ]
-	then
-		file1="$file"
-		file2="$reference_directory/$file"
-	fi
+	local file1="$file"
+	local file2="$reference_directory/$file"
 
 	local plot_file="cmp_${file}_${obj}"
 	plot_file="${plot_file//./_}"
@@ -155,18 +150,16 @@ function SimuComparison()
 
 		return 1
 	else
-		# TODO: remove
-		#MakeOneComparison "alignment.root" "global/L_1_F/a"
-		#MakeOneComparison "data/merged.root" "sb1/merged/combined/h_dsdt" "global"
+		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_H"
+		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_CH"
+
+		#MakeOneComparison "data/simu/$simu_version/$simu_model/seed$simu_seed/TODO.root" "TODO"
 
 		# TODO: add comparisons
-		#    - model graph, one model
 		#    - histogram with uncertainties, one model and one seed
 		#    - one fit output, one model and one seed
 		#    - process_histograms
 		#    - process_fits
-
-		# TODO: use version_sel, seed_sel, model_sel
 
 		if [ "$n_diff" -eq "0" ]
 		then
@@ -188,9 +181,10 @@ function SimuComparison()
 #----------------------------------------------------------------------------------------------------
 
 # defaults
-version_sel="version_TEST"
-seed_sel="1"
-model_sel="con_rho0.10"
+input_version="version_TEST"
+simu_version="version_TEST"
+simu_seed="1"
+simu_model="exp1_con_rho0.10"
 
 steps="
  FixmeCheck
