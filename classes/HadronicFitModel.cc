@@ -84,9 +84,12 @@ TComplex HadronicFitModel::Amp(double t) const
 	if (modulusMode == mmExp)
 	{
 		// blending region
+		// TODO: necessary ?
+		/*
 		double t_avg = (t2 + t1)/2., t_si = (t2 - t_avg) / 3.;
 		double t_opt_m1 = -t_avg + 5. * t_si;
 		double t_opt_m2 = -t_avg - 5. * t_si;
+		*/
 
 		// main modulus part (for low |t|)
 		double bPol = 0., tPow = t;
@@ -98,7 +101,7 @@ TComplex HadronicFitModel::Amp(double t) const
 		bPol += b6 * tPow; tPow *= t;
 		bPol += b7 * tPow; tPow *= t;
 		bPol += b8 * tPow; tPow *= t;
-		bPol += b9 * tPow; tPow *= t;
+		bPol += b9 * tPow;
 		const double m1 = a * exp(bPol);
 
 		// TODO: check if necessary
