@@ -1,0 +1,104 @@
+#!/bin/bash
+
+output="makefile"
+dep_tmp="makefile.dep.tmp"
+output_json="compile_commands.json"
+
+rm -f "$output"
+rm -f "$dep_tmp"
+rm -f "$output_json"
+
+#----------------------------------------------------------------------------------------------------
+
+echo "[" >> "$output_json"
+
+first="True"
+
+#----------------------------------------------------------------------------------------------------
+
+targets=""
+
+for src in `find . -name "*.cc"`
+do
+    echo "* $src"
+
+    dir=${src%/*}
+    file=${src##*/}
+
+    target="${src%.cc}"
+
+    extra=""
+
+    if [ "$dir" == "." ]
+    then
+        target="$dir/.${file%.cc}"
+    fi
+
+    if [ "$dir" == "./classes" ]
+    then
+        target="${src%.cc}.o"
+
+        extra="-c"
+    fi
+
+    targets="$targets $target"
+
+    # generate dependences
+    g++ -MM $INCS "$src" -MT "$target" >> $dep_tmp
+
+    # add entry to JSON file
+    (
+        if [ "$first" == "False" ]
+        then
+            echo "    ,"
+        fi
+
+		echo "    {"
+		echo "         \"command\": \"clang++ $extra $GCC_OPT_CLANG $INCS $src\","
+		echo "         \"directory\": \"$BASE_DIR\","
+		echo "         \"file\": \"$BASE_DIR/$src\""
+		echo "    }"
+    ) >> "$output_json"
+
+    first="False"
+
+    src="${src#*/}"
+done
+
+#----------------------------------------------------------------------------------------------------
+
+echo "]" >> "$output_json"
+
+(
+    echo "TARGETS=$targets"
+    echo ""
+    echo "CLASSES_OBJECTS=\$(shell find classes -name \"*.cc\"|while read f; do echo \$\${f%.cc}.o; done)"
+    echo ""
+    echo "all: \$(TARGETS)"
+    echo " "
+    echo "print:"
+    echo "	@echo \$(TARGETS)"
+    echo ""
+    echo "clean:"
+    echo "	rm -f \$(TARGETS)"
+    echo ""
+    echo "# default classes rule"
+    echo "classes/%.o : classes/%.cc"
+    echo "	@echo \"BUILDING \$@\""
+	echo "	@\$(CXX) \$(GCC_OPT) \$(INCS_LIBS) -c \$< -o \$@"
+    echo ""
+    echo "# default program rule"
+    echo ".% : %.cc \$(CLASSES_OBJECTS)"
+    echo "	@echo \"BUILDING \$@\""
+	echo "	@\$(CXX) \$(GCC_OPT) \$(INCS_LIBS) \$(CLASSES_OBJECTS) \$< -o \$@"
+    echo ""
+    echo "# default program rule"
+    echo "% : %.cc \$(CLASSES_OBJECTS)"
+    echo "	@echo \"BUILDING \$@\""
+	echo "	@\$(CXX) \$(GCC_OPT) \$(INCS_LIBS) \$(CLASSES_OBJECTS) \$< -o \$@"
+    echo ""
+) > "$output"
+
+cat "$dep_tmp" >> "$output"
+
+rm -f "$dep_tmp"

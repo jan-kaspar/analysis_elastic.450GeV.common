@@ -1,0 +1,278 @@
+#!/bin/bash
+
+# Note on step return codes:
+#   0 = no problem
+#   1 to 9 = light problem, process can continue
+#   10 and more = serious problem, process should stop
+
+#----------------------------------------------------------------------------------------------------
+
+function FixmeCheck()
+{
+	output=`grep -RlI "FIXME" . 2> /dev/null  | grep -v "OLD\|.git\|.tex\|.log\|test/run_test"`
+	if [ -n "$output" ]
+	then
+		echo "There are FIXMEs in the code."
+		echo "<li>FAILED</li>" >> "$report"
+		return 10
+	fi
+
+	echo "<li>OK</li>" >> "$report"
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function TodoCheck()
+{
+	n_TODO=`grep -RlI "TODO" . 2> /dev/null  | grep -v "OLD\|.git\|.tex\|.log\|test/run_test" |wc -l`
+
+	if [ "$n_TODO" -eq "0" ]
+	then
+		echo "<li>OK</li>" >> "$report"
+	else
+		echo "<li>$n_TODO files affected</li>" >> "$report"
+	fi
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function StaticAnalysisCheck()
+{
+	./configure || return 1
+
+	rm "scan-build" -rf
+	mkdir "scan-build"
+	scan-build -o "scan-build" make -j8 || return 2
+
+	index=`ls scan-build/*/index.html 2> /dev/null`
+
+	if [ -z "$index" ]
+	then
+		echo "<li>OK</li>" >> "$report"
+	else
+		echo "<li>report <a href=\"$index\">here</a></li>" >> "$report"
+	fi
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function Compilation()
+{
+	make clean || return 10
+	make -j8 || return 11
+
+	echo "<li>OK</li>" >> "$report"
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function Simu()
+{
+	./run_simu_chain -version "$version_sel" -repetitions 10 -models "$model_sel" || return 10
+
+	echo "<li>OK</li>" >> "$report"
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function ResetComparisonResults()
+{
+	n_diff="0"
+	failed_comparisons=""
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function MakeOneComparison()
+{
+	local file="$1"
+	local obj="$2"
+	local options="$3"
+
+	local file1="./data/$ds/$file"
+	local file2="$reference_directory/data/$ds/$file"
+	if [ "$options" == "global" ]
+	then
+		file1="$file"
+		file2="$reference_directory/$file"
+	fi
+
+	local plot_file="cmp_${file}_${obj}"
+	plot_file="${plot_file//./_}"
+	plot_file="${plot_file//\//_}"
+	plot_file="${plot_file// /_}"
+	plot_file="${plot_file}.png"
+
+	test/compare "$file1" "$obj" "$file2" "$obj" "$plot_file"
+	res="$?"
+
+	if [ ! "$res" -eq "0" ]
+	then
+		let n_diff+=1
+
+		diff_msg=""
+		if [ "$res" -eq "1" ]; then diff_msg="number of points"; fi
+		if [ "$res" -eq "2" ]; then diff_msg="major"; fi
+		if [ "$res" -eq "3" ]; then diff_msg="minor"; fi
+
+		if [ -n "$diff_msg" ]
+		then
+			diff_msg="$diff_msg, <a href="$plot_file">plot</a>"
+		else
+			diff_msg="other error"
+		fi
+
+		failed_comparisons="${failed_comparisons}    <li>$file, $obj ($diff_msg)</li>\n"
+	fi
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function SimuComparison()
+{
+	ResetComparisonResults
+
+	if [[ "$reference_directory" == *"none" ]]
+	then
+		echo "<li>not run - missing reference</li>" >> "$report"
+
+		return 1
+	else
+		# TODO: remove
+		#MakeOneComparison "alignment.root" "global/L_1_F/a"
+		#MakeOneComparison "data/merged.root" "sb1/merged/combined/h_dsdt" "global"
+
+		# TODO: add comparisons
+		#    - model graph, one model
+		#    - histogram with uncertainties, one model and one seed
+		#    - one fit output, one model and one seed
+		#    - process_histograms
+		#    - process_fits
+
+		# TODO: use version_sel, seed_sel, model_sel
+
+		if [ "$n_diff" -eq "0" ]
+		then
+			echo "<li>OK</li>" >> "$report"
+		else
+			echo "<li>$n_diff differences:</li>" >> "$report"
+			echo "<ul>" >> "$report"
+			echo -e "$failed_comparisons" >> "$report"
+			echo "</ul>" >> "$report"
+
+			return 2
+		fi
+	fi
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------
+
+# defaults
+version_sel="version_TEST"
+seed_sel="1"
+model_sel="con_rho0.10"
+
+steps="
+ FixmeCheck
+ TodoCheck
+ StaticAnalysisCheck
+ Compilation
+ Simu
+ SimuComparison
+"
+reference_directory=""
+report="test.log_short.html"
+
+# parse command line
+while [ -n "$1" ]
+do
+	case "$1" in
+		"-ref")
+			shift
+			reference_directory="$1"
+			;;
+
+		"-steps")
+			shift
+			steps="$1"
+			;;
+
+		"-report")
+			shift
+			report="$1"
+			;;
+
+		*)
+			echo "Unknown parameter: '$1'"
+			exit 1
+	esac
+
+	shift
+done
+
+# adjust settings
+if [ -z "$reference_directory" ]
+then
+	reference_directory=`ls -d /afs/cern.ch/user/j/jkaspar/www/IB/es_450GeV_common_master/*/|tail -n 1`
+	echo "* setting default reference directory: $reference_directory"
+fi
+
+# initialisation
+rm -f "$report"
+
+(
+	echo "<html>"
+	echo "<body>"
+	echo "<ul>"
+	echo "<li>starting test at: $(pwd -P)</li>"
+	echo "<li>reference directory: $reference_directory</li>"
+	echo "<li>test dataset: $ds</li>" >> "$report"
+) >> "$report"
+
+# prepare environment
+source environment || exit 1
+
+# run steps
+failure="0"
+for step in $steps
+do
+	echo "----- $step --------------------------------------------------"
+
+	echo "<li>$step</li>" >> "$report"
+	echo "<ul>" >> "$report"
+
+	$step
+	rc="$?"
+	if [ "$rc" -ne "0" ]
+	then
+		echo "<li>finished with return code $rc</li>" >> "$report"
+
+		failure="1"
+
+		if [ "$rc" -gt 9 ]
+		then
+			failure="10"
+			break
+		fi
+	fi
+
+	echo "</ul>" >> "$report"
+done
+
+# finalisation
+(
+	echo "</ul>"
+	echo "</body>"
+	echo "</html>"
+) >> "$report"
+
+exit $failure

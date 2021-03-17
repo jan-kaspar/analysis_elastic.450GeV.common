@@ -1,0 +1,46 @@
+#!/bin/bash
+
+export BASE_DIR=`pwd -P`
+
+shopt -s expand_aliases
+
+cwd=`pwd`
+
+cd "/afs/cern.ch/work/j/jkaspar/work/software/ctpps/production/CMSSW_10_6_17"
+source environment
+
+compName=$(uname -n)
+export compName="${compName%%.*}"
+
+function CalculatePrompt()
+{
+	cwd=`pwd`
+	cwd=${cwd/\/afs\/cern.ch\/work\/j\/jkaspar/...}
+	cwd=${cwd/\/analyses\/ctpps/}
+}
+
+PROMPT_COMMAND="CalculatePrompt"
+export PS1="\[\033[00;34m\]${compName} \[\033[00;33m\]${CMSSW_VERSION}\[\033[00;32m\] \$cwd> \[\033[00m\]"
+
+export GSL_DIR="/cvmfs/cms.cern.ch/slc7_amd64_gcc820/external/gsl/2.2.1-pafccj2"
+
+export INCS="-isystem ${GSL_DIR}/include\
+ -isystem ${CMSSW_BASE}/src -isystem ${CMSSW_RELEASE_BASE}/src \
+ -isystem `root-config --incdir`\
+ -I$BASE_DIR"
+
+export LIBS="-L${GSL_DIR}/lib -lgsl -lgslcblas -lm\
+ -L${CMSSW_BASE}/lib/$SCRAM_ARCH -L${CMSSW_RELEASE_BASE}/lib/$SCRAM_ARCH\
+ -lDataFormatsFWLite -lDataFormatsCommon -lDataFormatsCTPPSDetId -lDataFormatsCTPPSReco -lFWCoreParameterSet -lFWCoreParameterSetReader -lFWCoreUtilities\
+ `root-config --libs` -lMinuit"
+
+export INCS_LIBS="$INCS $LIBS"
+
+export GCC_OPT="-O2 -std=c++1z -fPIC -Wall -Wextra -Wno-attributes -g"
+export GCC_OPT_CLANG="-O2 -std=c++1z"
+
+cd "$cwd"
+
+echo "CMSSW_BASE=$CMSSW_BASE"
+
+alias mk="make -C $BASE_DIR -j8"

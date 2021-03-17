@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# exit upon error
+set -e
+
+# defaults
+version=""
+n_repetitions="2"
+models="con_rho0.05 con_rho0.10 con_rho0.15"
+
+# parse command line
+function PrintUsage()
+{
+	echo "PrintUsage $0 <option> <option>"
+	echo "OPTIONS:"
+	echo "    -version <string>       set version tag"
+	echo "    -repetitions <integer>   number of repetitions to use"
+	echo "    -models <string>        space-separated list of models"
+}
+
+while [ -n "$1" ]
+do
+	case $1 in
+		"-version")
+			shift
+			version="$1"
+			;;
+		"-repetitions")
+			shift
+			n_repetitions="$1"
+			;;
+		"-models")
+			shift
+			models="$1"
+			;;
+		*)
+			echo "ERROR: parameter '$1' not understood."
+			PrintUsage
+			exit 1
+			;;
+	esac
+
+	shift
+done
+
+# check input
+if [ -z "$version" ]
+then
+	echo "ERROR: version not defined."
+	PrintUsage
+	exit 2
+fi
+
+# execute
+topDir="data/simu/$version"
+
+mkdir -p "$topDir"
+cd "$topDir"
+
+$BASE_DIR/.simu_sample_models &> "models.log"
+
+for model in $models
+do
+	mkdir -p "$model"
+	cd "$model"
+
+	for seed in `seq 1 $n_repetitions`
+	do
+		mkdir -p "seed_$seed"
+		cd "seed_$seed"
+
+		$BASE_DIR/.simu_make_histograms &> "histograms.log"
+
+		$BASE_DIR/.make_fit &> "fit.log"
+
+		cd ..
+	done
+
+	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions &> "process_histograms.log"
+
+	$BASE_DIR/.simu_process_fits -seed-min 1 -seed-max $n_repetitions &> "process_fits.log"
+
+	cd ..
+done
