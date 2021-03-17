@@ -3,16 +3,22 @@
 # defaults
 version=""
 n_repetitions="2"
-models="con_rho0.05 con_rho0.10 con_rho0.15"
+models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
+
+input_version="version_TEST"
+
+binnings="sb1,sb2,sb3"
 
 # parse command line
 function PrintUsage()
 {
 	echo "PrintUsage $0 <option> <option>"
 	echo "OPTIONS:"
-	echo "    -version <string>        set version tag"
+	echo "    -version <string>        version of the simulation"
 	echo "    -repetitions <integer>   number of repetitions to use"
 	echo "    -models <string>         space-separated list of models"
+	echo "    -input-version <string>  version of the input"
+	echo "    -binnings <string>       comma-separated list of binnings"
 }
 
 while [ -n "$1" ]
@@ -29,6 +35,14 @@ do
 		"-models")
 			shift
 			models="$1"
+			;;
+		"-input-version")
+			shift
+			input_version="$1"
+			;;
+		"-binnings")
+			shift
+			binnings="$1"
 			;;
 		*)
 			echo "ERROR: parameter '$1' not understood."
@@ -60,15 +74,22 @@ $BASE_DIR/.simu_sample_models &> "models.log" || exit 21
 
 for model in $models
 do
+	echo "* $model"
+
 	mkdir -p "$model"
 	cd "$model"
 
 	for seed in `seq 1 $n_repetitions`
 	do
+		echo "  - $seed"
+
 		mkdir -p "seed_$seed"
 		cd "seed_$seed"
 
-		$BASE_DIR/.simu_make_histograms &> "histograms.log" || exit 22
+		$BASE_DIR/.simu_make_histograms -model-file "../../models.root" -model-obj "$model/g_dsdt_CH" \
+			-input-file "$BASE_DIR/data/input/$input_version/import.root" -binnings "$binnings" -seed $seed \
+			-sim-stat-err 1 -sim-syst-err 1 -sim-norm-err 1\
+			&> "histograms.log" || exit 22
 
 		$BASE_DIR/.make_fit &> "fit.log" || exit 23
 
