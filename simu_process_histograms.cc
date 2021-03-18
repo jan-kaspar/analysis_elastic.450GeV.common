@@ -5,6 +5,7 @@
 
 #include "TFile.h"
 #include "TH1D.h"
+#include "TH2D.h"
 
 #include <cstdio>
 #include <cstring>
@@ -151,7 +152,16 @@ int main(int argc, const char **argv)
 
 			d.h_ref->Write("h_stddev_rel");
 
-			// TODO: save also TH2D with covariance matrix
+			int n_bins = d.h_ref->GetNbinsX();
+			TH2D *h2_corr = new TH2D("h2_corr", ";bin idx;bin idx", n_bins, -0.5, double(n_bins) - 0.5, n_bins, -0.5, double(n_bins) - 0.5);
+
+			for (int i = 0; i < n_bins; ++i)
+			{
+				for (int j = 0; j < n_bins; ++j)
+					h2_corr->SetBinContent(i+1, j+1, d.st->GetCorrelation(i, j));
+			}
+
+			h2_corr->Write("h2_rel_corr");
 		}
 	}
 
