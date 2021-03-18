@@ -1,12 +1,13 @@
 #include "classes/command_line_tools.hh"
 
-#include <TDirectory.h>
-#include <TFile.h>
-#include <TGraph.h>
-#include <TH1D.h>
-#include <TMatrixD.h>
-#include <TRandom.h>
-#include <TRandom3.h>
+#include "TDirectory.h"
+#include "TFile.h"
+#include "TGraph.h"
+#include "TH1D.h"
+#include "TMatrixD.h"
+#include "TVectorD.h"
+#include "TRandom.h"
+#include "TMatrixDSymEigen.h"
 
 #include <cstdio>
 #include <cstring>
@@ -52,7 +53,34 @@ void AddStatisticalErrors(int bi_min, int bi_max, TH1D *h_simu)
 
 void AddSystematicErrors(const TMatrixD &m_syst_unc, const TH1D *h_simu_ideal, int bi_min, int bi_max, TH1D *h_simu)
 {
-	// TODO: implement
+	// generate relative bin perturbations
+	int n_bins = bi_max - bi_min + 1;
+
+	TMatrixDSym m_red(n_bins);
+	for (int i = 0; i < n_bins; ++i)
+	{
+		for (int j = 0; j < n_bins; ++j)
+			m_red(i, j) = m_syst_unc(i + bi_min-1, j + bi_min-1);
+	}
+
+	TMatrixDSymEigen eig_decomp(m_red);
+	const TVectorD& eig_values(eig_decomp.GetEigenValues());
+	TMatrixDSym S(n_bins);
+	for (int i = 0; i < n_bins; i++)
+		S(i, i) = (eig_values(i) >= 0.) ? sqrt(eig_values(i)) : 0.;
+	TMatrixD m_gen = eig_decomp.GetEigenVectors() * S;
+
+	TVectorD g(n_bins);
+	for (int i = 0; i < n_bins; ++i)
+		g(i) = gRandom->Gaus();
+	TVectorD rel_unc_red = m_gen * g;
+
+	// apply relative bin perturbations
+	for (int i = 0; i < n_bins; ++i)
+	{
+		const int bi = i + bi_min;
+		h_simu->SetBinContent(bi, h_simu->GetBinContent(bi) + rel_unc_red(i) * h_simu_ideal->GetBinContent(bi));
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
