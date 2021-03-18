@@ -143,7 +143,10 @@ int main(int argc, const char **argv)
 				const int i = bi - 1;
 				const double mu = d.st->GetMean(i);
 				const double si = d.st->GetStdDev(i);
+				const double si_unc = d.st->GetStdDevUncGauss(i);
+
 				d.h_ref->SetBinContent(bi, (mu > 0) ? si/mu : 0.);
+				d.h_ref->SetBinError(bi, (mu > 0) ? si_unc/mu : 0.);
 			}
 
 			d.h_ref->Write("h_stddev_rel");
