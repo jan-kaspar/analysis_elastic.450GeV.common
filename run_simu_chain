@@ -110,6 +110,7 @@ do
 		if [ "$error_model" == "stat" ]; then e_stat="1"; fi
 		if [ "$error_model" == "syst" ]; then e_syst="1"; fi
 		if [ "$error_model" == "norm" ]; then e_norm="1"; fi
+		if [ "$error_model" == "full" ]; then e_stat="1"; e_syst="1"; e_norm="1"; fi
 
 		run_fits="0"
 		if [ "$error_model" == "full" ]; then run_fits="1"; fi
