@@ -83,7 +83,7 @@ function MainAnalysis()
 
 function Simu()
 {
-	./run_simu_chain -version "$simu_version" -repetitions 5 -models "$simu_model" || return 10
+	./run_simu_chain -fast -version "$simu_version" -models "$simu_model" || return 10
 
 	echo "<li>OK</li>" >> "$report"
 
