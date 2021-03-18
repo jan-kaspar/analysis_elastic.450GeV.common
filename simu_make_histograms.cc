@@ -22,11 +22,18 @@ void BuildModelHistogram(const TGraph *g_model, const TH1D *h_input, int bi_min,
 {
 	for (int bi = bi_min; bi <= bi_max; ++bi)
 	{
-		const double t_cen = h_input->GetBinCenter(bi);
+		const double l = h_input->GetBinLowEdge(bi);
+		const double w = h_input->GetBinWidth(bi);
 		const double input_c = h_input->GetBinContent(bi);
 		const double input_u = h_input->GetBinError(bi);
 
-		const double c = g_model->Eval(t_cen); // TODO: this is jsut a crude approximation
+		const unsigned int n_div = 10;
+		double c = 0.;
+		for (unsigned j = 0; j < n_div; ++j)
+		{
+			const double t = l + (double(j) + 0.5) * w / n_div;
+			c += g_model->Eval(t) / n_div;
+		}
 
 		h_simu_ideal->SetBinContent(bi, c);
 		h_simu_ideal->SetBinError(bi, input_u / input_c * c);
