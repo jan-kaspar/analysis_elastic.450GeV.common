@@ -3,6 +3,8 @@
 #include "Elegent/Constants.h"
 #include "Elegent/Math.h"
 
+using namespace Elegent;
+
 //----------------------------------------------------------------------------------------------------
 
 double HadronicFitModel::DsigmaDTHighT(double t) const

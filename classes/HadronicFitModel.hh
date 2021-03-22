@@ -8,9 +8,9 @@
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
-using namespace Elegent;
+//----------------------------------------------------------------------------------------------------
 
-class HadronicFitModel : public Model
+class HadronicFitModel : public Elegent::Model
 {
   public:
 	/// modulus parameters (low |t|)
