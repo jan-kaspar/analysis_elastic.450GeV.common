@@ -1,7 +1,6 @@
-#include <TDirectory.h>
 #include "classes/command_line_tools.hh"
-
 #include "classes/HadronicFitModel.hh"
+#include "classes/Result.hh"
 
 #include "Elegent/Constants.h"
 #include "Elegent/CoulombInterference.h"
@@ -16,6 +15,7 @@
 #include "TMinuitMinimizer.h"
 #include "TSpline.h"
 #include "TCanvas.h"
+#include "TDirectory.h"
 
 #include <cstdio>
 #include <cstring>
@@ -526,6 +526,8 @@ struct Minimization
 	void ResultToModel();
 
 	void WriteGraphs() const;
+
+	Result GetResults() const;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -556,6 +558,70 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	}
 
 	fitter.Config().ParSettings(model.n_b + 2).Set("p0", is.p0, 0.01);
+}
+
+//----------------------------------------------------------------------------------------------------
+
+Result Minimization::GetResults() const
+{
+	using namespace Elegent;
+
+	Result r;
+	
+	const ROOT::Fit::FitResult &fr = fitter.Result();
+
+	unsigned int idx;
+
+	idx = 0;
+	r.Set("eta", fr.Parameter(idx));
+	r.Set("eta_unc", sqrt(fr.CovMatrix(idx, idx)));
+
+	idx = 1;
+	const double a = fr.Parameter(idx) * 1E6;
+	const double a_unc = sqrt(fr.CovMatrix(idx, idx)) * 1E6;
+	const double A = cnts->sig_fac * a*a;
+	r.Set("A", A);
+	r.Set("A_unc", cnts->sig_fac * 2*a * a_unc);
+
+	idx = 2;
+	r.Set("b1", fr.Parameter(idx));
+	r.Set("b1_unc", sqrt(fr.CovMatrix(idx, idx)));
+
+	idx = 2 + model.n_b;
+	const double p0 = fr.Parameter(idx);
+	const double p0_unc = sqrt(fr.CovMatrix(idx, idx));
+	r.Set("p0", p0);
+	r.Set("p0_unc", p0_unc);
+
+	const double rho = cos(p0) / sin(p0);
+	const double rho_unc = fabs(1. / sin(p0) / sin(p0)) * p0_unc;
+
+	r.Set("rho", rho);
+	r.Set("rho_unc", rho_unc);
+
+	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
+
+	const double V_a_a = fr.CovMatrix(1, 1);
+	const double V_a_p0 = fr.CovMatrix(1, idx);
+	const double V_p0_p0 =  fr.CovMatrix(idx, idx);
+
+	const double sc_A = 2. * cnts->sig_fac * fr.Parameter(1) * 1E6 * 1E6;
+	const double sc_rho = 1. / sin(p0) / sin(p0);
+
+	const double V_A_A = sc_A * V_a_a * sc_A;
+	const double V_A_rho = sc_A * V_a_p0 * sc_rho;
+	const double V_rho_rho = sc_rho * V_p0_p0 * sc_rho;
+
+	const double der_A = si_tot/2. * 1./A;
+	const double der_rho = si_tot/2. * 2.*rho / (1. + rho*rho);
+
+	const double V_si_tot = der_A * V_A_A * der_A + 2.* der_A * V_A_rho * der_rho + der_rho * V_rho_rho * der_rho;
+	const double si_tot_unc = sqrt(V_si_tot);
+
+	r.Set("si_tot", si_tot);
+	r.Set("si_tot_unc", si_tot_unc);
+
+	return r;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -700,7 +766,7 @@ int main(int argc, const char **argv)
 	is.eta = 1;
 	is.a = 5.64E6;
 	is.b1 = 8.5;
-	is.p0 = M_PI - atan(0.10);
+	is.p0 = M_PI/2. - atan(0.10);
 
 	unsigned int n_iterations = 3;
 
@@ -852,12 +918,13 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	printf("----- aftern iterations -----\n");
+	printf("----- after iterations -----\n");
 	
 	gDirectory = f_root->mkdir("final");
 
 	// save results
-	// TODO
+	if (!output_results.empty())
+		minimization.GetResults().Write(output_results);
 
 	return 0;
 }
