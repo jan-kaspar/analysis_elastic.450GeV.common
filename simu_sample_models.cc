@@ -1,12 +1,13 @@
 #include "classes/command_line_tools.hh"
+#include "classes/Result.hh"
+#include "classes/HadronicFitModel.hh"
 
 #include "Elegent/Constants.h"
 #include "Elegent/CoulombInterference.h"
 
-#include "classes/HadronicFitModel.hh"
-
 #include "TFile.h"
 #include "TGraph.h"
+#include <TComplex.h>
 
 #include <cstring>
 
@@ -24,8 +25,6 @@ void PrintUsage()
 
 //----------------------------------------------------------------------------------------------------
 
-//----------------------------------------------------------------------------------------------------
-
 void SampleModel(Model *m, const string &label)
 {
 	model = m;
@@ -34,6 +33,7 @@ void SampleModel(Model *m, const string &label)
 
 	gDirectory = d_top->mkdir(label.c_str());
 
+	// make graphs
 	TGraph *g_dsdt_H = new TGraph();
 	TGraph *g_dsdt_CH = new TGraph();
 
@@ -59,6 +59,27 @@ void SampleModel(Model *m, const string &label)
 	g_dsdt_H->Write("g_dsdt_H");
 	g_dsdt_CH->Write("g_dsdt_CH");
 
+	// write "results"
+	const double ep = 1E-4;
+	TComplex F_H_0 = model->Amp(0);
+	TComplex F_H_ep = model->Amp(-ep);
+
+	const double A = cnts->sig_fac * F_H_0.Rho2();
+	const double b1 = (log(F_H_0.Rho2()) - log(F_H_ep.Rho2())) / ep;
+	const double rho = F_H_0.Re() / F_H_0.Im();
+	const double p0 = M_PI/2. - atan(rho);
+	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
+
+	Result r;
+	r.Set("eta", 1.);
+	r.Set("A", A);
+	r.Set("b1", b1);
+	r.Set("rho", rho);
+	r.Set("p0", p0);
+	r.Set("si_tot", si_tot);
+
+	r.ExportROOT()->Write("info");
+
 	gDirectory = d_top;
 }
 
@@ -66,9 +87,6 @@ void SampleModel(Model *m, const string &label)
 
 int main(int argc, const char **argv)
 {
-	// defaults
-	//string cfg_file = "config.py";
-
 	// parse command line
 	for (int argi = 1; (argi < argc) && (cl_error == 0); ++argi)
 	{
@@ -77,8 +95,6 @@ int main(int argc, const char **argv)
 			cl_error = 1;
 			continue;
 		}
-
-		//if (TestStringParameter(argc, argv, argi, "-cfg", cfg_file)) continue;
 
 		printf("ERROR: unknown option '%s'.\n", argv[argi]);
 		cl_error = 1;
