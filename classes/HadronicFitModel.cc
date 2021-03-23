@@ -9,67 +9,15 @@ using namespace Elegent;
 
 double HadronicFitModel::DsigmaDTHighT(double t) const
 {
-	double x = -t;
+	const double mt = -t;
 
-	// exp4+exp2
-	if (modulusHighTVariant == 1)
+	// exp1
+	if (modulusHighTVariant == mhtVariant1)
 	{
-		const double P0 = 6.11442e+02;
-		const double P1 = -2.07544e+01;
-		const double P2 = 1.01559e+00;
-		const double P3 = 2.23444e+01;
-		const double P4 = -9.65895e+01;
-		const double P5 = 2.89226e-04;
-		const double P6 = 1.44707e+01;
-		const double P7 = -1.09700e+01;
+		const double A = 0.5E-2;
+		const double B = 1.7;
 
-		return P0*exp(P1*x + P2*x*x + P3*x*x*x + P4*x*x*x*x) + P5*exp(P6*x + P7*x*x);
-	}
-
-	// p1*exp3+p1*exp1
-	if (modulusHighTVariant == 2)
-	{
-		const double P0 = 6.24949e+02;
-		const double P1 = -2.56314e+02;
-		const double P2 = -2.04532e+01;
-		const double P3 = 8.49336e+00;
-		const double P4 = -1.60850e+01;
-		const double P5 = -1.11034e+01;
-		const double P6 = 2.25886e+01;
-		const double P7 = -7.02090e+00;
-
-		return (P0 + P1*x) * exp(P2*x + P3*x*x + P4*x*x*x) + (P5 + P6*x) * exp(P7*x);
-	}
-
-	// p1*exp3+p2*exp2
-	if (modulusHighTVariant == 3)
-	{
-		const double P0 = 7.16305e+02;
-		const double P1 = -2.37871e+02;
-		const double P2 = -1.96623e+01;
-		const double P3 = 9.34281e+00;
-		const double P4 = -1.50302e+01;
-		const double P5 = -1.02707e+02;
-		const double P6 = 8.08324e+01;
-		const double P7 = 2.20613e+02;
-		const double P8 = -1.29148e+01;
-		const double P9 = 3.09810e+00;
-
-		return (P0 + P1*x) * exp(P2*x + P3*x*x + P4*x*x*x) + (P5 + P6*x + P7*x*x) * exp(P8*x + P9*x*x);
-	}
-
-	// exp3-intf-exp1
-	if (modulusHighTVariant == 4)
-	{
-		const double P0 = 2.65511e+00;
-		const double P1 = 2.55649e+01;
-		const double P2 = -1.02703e+01;
-		const double P3 = 4.42715e+00;
-		const double P4 = -6.83600e+00;
-		const double P5 = 9.00437e-01;
-		const double P6 = -2.16005e+00;
-
-		return P1*P1*exp(2*P2*x + 2*P3*x*x + 2*P4*x*x*x) + 2 * cos(P0) * P1*exp(P2*x + P3*x*x + P4*x*x*x) * P5*exp(P6*x) + P5*P5*exp(2*P6*x);
+		return A*exp(-B*mt);
 	}
 
 	return 0;
@@ -86,12 +34,9 @@ TComplex HadronicFitModel::Amp(double t) const
 	if (modulusMode == mmExp)
 	{
 		// blending region
-		// TODO: necessary ?
-		/*
-		double t_avg = (t2 + t1)/2., t_si = (t2 - t_avg) / 3.;
-		double t_opt_m1 = -t_avg + 5. * t_si;
-		double t_opt_m2 = -t_avg - 5. * t_si;
-		*/
+		const double t_avg = (t2 + t1)/2., t_si = (t2 - t_avg) / 3.;
+		const double t_opt_m1 = -t_avg + 5. * t_si;
+		const double t_opt_m2 = -t_avg - 5. * t_si;
 
 		// main modulus part (for low |t|)
 		double bPol = 0., tPow = t;
@@ -99,23 +44,17 @@ TComplex HadronicFitModel::Amp(double t) const
 		bPol += b2 * tPow; tPow *= t;
 		bPol += b3 * tPow; tPow *= t;
 		bPol += b4 * tPow; tPow *= t;
-		bPol += b5 * tPow; tPow *= t;
-		bPol += b6 * tPow; tPow *= t;
-		bPol += b7 * tPow; tPow *= t;
-		bPol += b8 * tPow; tPow *= t;
-		bPol += b9 * tPow;
+		bPol += b5 * tPow;
 		const double m1 = a * exp(bPol);
 
-		// TODO: check if necessary
 		m = m1;
-		/*
 		if (t > t_opt_m1)
 		{
 			// optimisation for very low |t|: only m1 component
 			m = m1;
 		} else {	
 			// fixed part for higher |t|
-			double m2 = hts * sqrt(DsigmaDTHighT(t) / cnts->sig_fac);
+			const double m2 = hts * sqrt(DsigmaDTHighT(t) / cnts->sig_fac);
 
 			if (t < t_opt_m2)
 			{
@@ -123,11 +62,10 @@ TComplex HadronicFitModel::Amp(double t) const
 				m = m2;
 			} else {
 				// full modulus (low and high-|t| parts blended)
-				double p = (TMath::Erf( (-t - t_avg) / t_si / sqrt(2.) ) + 1.) / 2.;
+				const double p = (TMath::Erf( (-t - t_avg) / t_si / sqrt(2.) ) + 1.) / 2.;
 				m = m1*(1.-p) + m2*p;
 			}
 		}
-		*/
 	}
 
 	// ---------- phase ----------

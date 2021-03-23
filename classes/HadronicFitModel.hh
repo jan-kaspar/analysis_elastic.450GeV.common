@@ -15,11 +15,13 @@ class HadronicFitModel : public Elegent::Model
   public:
 	/// modulus parameters (low |t|)
 	enum ModulusMode { mmUnknown, mmExp } modulusMode;
-	double a, b1, b2, b3, b4, b5, b6, b7, b8, b9;
+	double a, b1, b2, b3, b4, b5;
 
 	/// modulus parameters (high |t|)
-	unsigned int modulusHighTVariant;
-	double hts; ///< scale factor for the high-|t| part
+	enum ModulusHighTVariant { mhtVariant1 } modulusHighTVariant;
+
+	/// scale factor for the high-|t| part
+	double hts; 
 
 	/// parameters for blending the low-|t| (variable) and high-|t| (fixed) modulus
 	/// the interval (t1, t2) corresponds to (-3 sigma, +3 sigma)
@@ -31,9 +33,9 @@ class HadronicFitModel : public Elegent::Model
 
     HadronicFitModel() :
 		modulusMode(mmExp),
-		a(0.), b1(0.), b2(0.), b3(0.), b4(0.), b5(0.), b6(0.), b7(0.), b8(0.), b9(0.),
+		a(0.), b1(0.), b2(0.), b3(0.), b4(0.), b5(0.),
 
-		modulusHighTVariant(2),
+		modulusHighTVariant(mhtVariant1),
 		hts(1.),
 		t1(0.2), t2(0.5),
 
@@ -67,10 +69,10 @@ class HadronicFitModel : public Elegent::Model
 
 		printf("\tmodulus: %s\n", GetModulusModeString().c_str());
 		if (modulusMode == mmExp)
-			printf("\t\ta=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E, b6=%.3E, b7=%.3E, b8=%.3E, b9=%.3E\n",
-				a, b1, b2, b3, b4, b5, b6, b7, b8, b9);
+			printf("\t\ta=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E\n",
+				a, b1, b2, b3, b4, b5);
 
-		printf("\tmodulus at high |t|: variant %u, hts=%.3f\n", modulusHighTVariant, hts);
+		printf("\tmodulus at high |t|: variant %s, hts=%.3f\n", GetModulusHighTModeString().c_str(), hts);
 
 		printf("\tblending parameters: t1=%.3E, t2=%.3E\n", t1, t2);
 
@@ -90,10 +92,11 @@ class HadronicFitModel : public Elegent::Model
 	void PrintCode(const char *name = "hfm") const
 	{
 		if (modulusMode == mmExp)
-			printf("%s->modulusMode = HadronicFitModel::mmExp;\n%s->a=%.5E;\n%s->b1=%.5E;\n%s->b2=%.5E;\n%s->b3=%.5E;\n%s->b4=%.5E;\n%s->b5=%.5E;\n%s->b6=%.5E;\n%s->b7=%.5E;\n%s->b8=%.5E;\n%s->b9=%.5E;\n",
-				name, name, a, name, b1, name, b2, name, b3, name, b4, name, b5, name, b6, name, b7, name, b8, name, b9);
+			printf("%s->modulusMode = HadronicFitModel::mmExp;\n%s->a=%.5E;\n%s->b1=%.5E;\n%s->b2=%.5E;\n%s->b3=%.5E;\n%s->b4=%.5E;\n%s->b5=%.5E;\n",
+				name, name, a, name, b1, name, b2, name, b3, name, b4, name, b5);
 
-		printf("%s->modulusHighTVariant = %u\n", name, modulusHighTVariant);
+		if (modulusHighTVariant == mhtVariant1)
+			printf("%s->modulusHighTVariant = HadronicFitModel::mhtVariant1\n", name);
 		printf("%s->hts = %.1E\n", name, hts);
 
 		if (modulusMode == mmExp)
@@ -120,8 +123,8 @@ class HadronicFitModel : public Elegent::Model
 	{
 		char buf_m[200];
 		if (modulusMode == mmExp)
-			sprintf(buf_m, "modulus: exp, a=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E, b6=%.3E, b7=%.3E, b8=%.3E, b9=%.3E",
-				a, b1, b2, b3, b4, b5, b6, b7, b8, b9);
+			sprintf(buf_m, "modulus: exp, a=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E",
+				a, b1, b2, b3, b4, b5);
 
 		char buf_p[200];
 		if (phaseMode == pmConstant)
@@ -142,7 +145,7 @@ class HadronicFitModel : public Elegent::Model
 	{
 		char buf_m[200];
 		if (modulusMode == mmExp)
-			sprintf(buf_m, "a=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E, b6=%.3E, b7=%.3E, b8=%.3E, b9=%.3E | ", a, b1, b2, b3, b4, b5, b6, b7, b8, b9);
+			sprintf(buf_m, "a=%.3E, b1=%.3E, b2=%.3E, b3=%.3E, b4=%.3E, b5=%.3E | ", a, b1, b2, b3, b4, b5);
 
 		char buf_p[200];
 		if (phaseMode == pmConstant)
@@ -159,10 +162,16 @@ class HadronicFitModel : public Elegent::Model
 		return std::string(buf_m) + buf_p;
 	}
 
-
     std::string GetModulusModeString() const
 	{
 		if (modulusMode == mmExp) return "exp";
+
+		return "unknown";
+	}
+
+    std::string GetModulusHighTModeString() const
+	{
+		if (modulusHighTVariant == mhtVariant1) return "variant1";
 
 		return "unknown";
 	}
@@ -189,7 +198,6 @@ class HadronicFitModel : public Elegent::Model
 		return 0;
 	}
 
-	// TODO: needed ?
 	double DsigmaDTHighT(double t) const;
 
     TComplex Amp(double t) const override;
