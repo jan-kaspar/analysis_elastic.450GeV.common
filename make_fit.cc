@@ -9,11 +9,13 @@
 #include "TFile.h"
 #include "TH1D.h"
 #include "TGraph.h"
+#include "TGraphErrors.h"
 #include "TMatrixD.h"
 #include "TMatrixDSym.h"
 #include "Fit/Fitter.h"
 #include "TMinuitMinimizer.h"
 #include "TSpline.h"
+#include "TCanvas.h"
 
 #include <cstdio>
 #include <cstring>
@@ -39,13 +41,15 @@ struct Model
 	unique_ptr<TGraph> g_psi_re, g_psi_im;
 	unique_ptr<TSpline3> s_psi_re, s_psi_im;
 
+	enum Component { cC, cH, cCH };
+
 	Model(unsigned int _n_b);
 
 	void ResetCaches();
 	void UpdateCaches();
 	void WriteCaches() const;
 
-	double Eval(double t) const;
+	double Eval(double t, Component c = cCH) const;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -53,9 +57,14 @@ struct Model
 Model::Model(unsigned int _n_b) :
 	n_b(_n_b),
 	n_fit_parameters(n_b + 3),
+	hfm(new HadronicFitModel()),
 	caches_initialized(false)
 {
 	// initialise hadronic model
+	hfm->modulusMode = HadronicFitModel::mmExp;
+	hfm->phaseMode = HadronicFitModel::pmConstant;
+	hfm->t1 = 0.5;
+	hfm->t2 = 1.5;
 	hfm->Print();
 
 	// initialise Elegent
@@ -63,6 +72,8 @@ Model::Model(unsigned int _n_b) :
 
 	Constants::Init(2*450., cnts->mPP);
     cnts->Print();
+
+	model = hfm.get();
 
 	coulomb->mode = CoulombInterference::mKL;
 	coulomb->ffType = coulomb->ffPuckett;
@@ -99,10 +110,13 @@ void Model::UpdateCaches()
 		g_psi_re->SetPoint(idx, mt, Psi.Re());
 		g_psi_im->SetPoint(idx, mt, Psi.Im());
 
-		dmt = 0.0005;
+		dmt = 0.0001;
 
-		if (mt > 0.002)
+		if (mt > 0.003)
 			dmt = 0.001;
+
+		if (mt > 0.02)
+			dmt = 0.004;
 	}
 
 	s_psi_re = make_unique<TSpline3>("splinePsiRe", g_psi_re->GetX(), g_psi_re->GetY(), g_psi_re->GetN());
@@ -124,7 +138,7 @@ void Model::WriteCaches() const
 
 //----------------------------------------------------------------------------------------------------
 
-double Model::Eval(double mt) const
+double Model::Eval(double mt, Model::Component component) const
 {
 	using namespace Elegent;
 
@@ -135,19 +149,13 @@ double Model::Eval(double mt) const
 	// amplitude choice
 	TComplex F_T = 0.;
 
-	if (coulomb->mode == coulomb->mPC)
+	if (component == cC)
 		F_T = F_C;
 
-	if (coulomb->mode == coulomb->mPH)
+	if (component == cH)
 		F_T = F_H;
 
-	if (coulomb->mode == coulomb->mSWY)
-	{
-		const TComplex Psi = - coulomb->Phi_SWY(-mt);
-		F_T = F_C + F_H * TComplex::Exp(i*Psi);
-	}
-
-	if (coulomb->mode == coulomb->mKL)
+	if (component == cCH)
 	{
 		const TComplex Psi = (caches_initialized) ? TComplex(s_psi_re->Eval(mt), s_psi_im->Eval(mt)) : - coulomb->Phi_SWY(-mt);
 		F_T = F_C + F_H * TComplex::Exp(i*Psi);
@@ -176,19 +184,24 @@ struct Bin
 
 struct Dataset
 {
+	// label
+	string tag;
+
 	// vector of bin data
 	vector<Bin> bins;
 
 	// input matrix of relative systematic uncertainties
 	TMatrixDSym m_unc_syst_rel;
 
-	// inverted covariance matrix - for use in chi^2 calculation
-	TMatrixD m_cov_inv;
+	// (inverted) covariance matrix - for use in chi^2 calculation
+	TMatrixD m_cov, m_cov_inv;
 
 	// normalisation factor
 	double eta;
 
-	Dataset(const string &file, const string &directory, double t_min, double t_max);
+	Dataset(const string &_tag, const string &file, const string &directory, double t_min, double t_max);
+
+	void Write() const;
 
 	// update mutable elements (bin representative points, inverted covariance matrix)
 	// if model != 0, then based on model from previous iteration
@@ -197,7 +210,8 @@ struct Dataset
 
 //----------------------------------------------------------------------------------------------------
 
-Dataset::Dataset(const string &file, const string &directory, double t_min, double t_max)
+Dataset::Dataset(const string &_tag, const string &file, const string &directory, double t_min, double t_max) :
+	tag(_tag)
 {
 	unique_ptr<TFile> f_in(TFile::Open(file.c_str()));
 
@@ -226,7 +240,7 @@ Dataset::Dataset(const string &file, const string &directory, double t_min, doub
 	//printf("bi_min = %i, bi_max = %i\n", bi_min, bi_max);
 
 	// extract bin data
-	bins.reserve(dim);
+	bins.resize(dim);
 	for (int bi = bi_min; bi <= bi_max; ++bi)
 	{
 		const double l = h_dsdt_cen_stat->GetBinLowEdge(bi);
@@ -253,6 +267,47 @@ Dataset::Dataset(const string &file, const string &directory, double t_min, doub
 
 //----------------------------------------------------------------------------------------------------
 
+void Dataset::Write() const
+{
+	unique_ptr<TGraphErrors> g_data_t_unc(new TGraphErrors), g_data_dsdt_unc_stat(new TGraphErrors),
+		g_data_dsdt_unc_syst(new TGraphErrors), g_data_dsdt_unc_comb(new TGraphErrors);
+
+	for (unsigned int i = 0; i < bins.size(); ++i)
+	{
+		const auto &b = bins[i];
+
+		const double t_cen = (b.t_right + b.t_left) / 2.;
+		const double t_unc = (b.t_right - b.t_left) / 2.;
+		const double t_repr = b.t_repr;
+
+		const double dsdt = b.dsdt / eta;
+		const double dsdt_unc_stat = b.dsdt_unc_stat / eta;
+		const double dsdt_unc_syst = sqrt(m_unc_syst_rel(i, i)) * dsdt / eta;
+		const double dsdt_unc_comb = sqrt(m_cov(i, i)) / eta;
+
+		int idx = g_data_t_unc->GetN();
+
+		g_data_t_unc->SetPoint(idx, t_cen, dsdt);
+		g_data_t_unc->SetPointError(idx, t_unc, 0.);
+
+		g_data_dsdt_unc_stat->SetPoint(idx, t_repr, dsdt);
+		g_data_dsdt_unc_stat->SetPointError(idx, 0., dsdt_unc_stat);
+
+		g_data_dsdt_unc_syst->SetPoint(idx, t_repr, dsdt);
+		g_data_dsdt_unc_syst->SetPointError(idx, 0., dsdt_unc_syst);
+
+		g_data_dsdt_unc_comb->SetPoint(idx, t_repr, dsdt);
+		g_data_dsdt_unc_comb->SetPointError(idx, 0., dsdt_unc_comb);
+	}
+
+	g_data_t_unc->Write("g_data_t_unc");
+	g_data_dsdt_unc_stat->Write("g_data_dsdt_unc_stat");
+	g_data_dsdt_unc_syst->Write("g_data_dsdt_unc_syst");
+	g_data_dsdt_unc_comb->Write("g_data_dsdt_unc_comb");
+}
+
+//----------------------------------------------------------------------------------------------------
+
 void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 {
 	// adjust bin representative points
@@ -271,7 +326,7 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 			const double wo = w / n_div;
 			double I = 0.;
 			for (unsigned int i = 0; i < n_div; ++i)
-				I += model->Eval((0.5 + double(i)) * wo);
+				I += model->Eval(l + (0.5 + double(i)) * wo);
 			I *= wo;
 
 			// find representative point
@@ -279,6 +334,7 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 			while (r - l > w/10000)
 			{
 				xr = (r+l)/2.;
+				
 				if (model->Eval(xr) < I/w)
 					r -= (r-l)/2.;
 				else
@@ -288,10 +344,10 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 		}
 	}
 
-	// build inverted uncertainty matrix
+	// build uncertainty matrix
 	const int dim = bins.size();
 
-	m_cov_inv.ResizeTo(dim, dim);
+	m_cov.ResizeTo(dim, dim);
 
 	for (int i = 0; i < dim; ++i)
 	{
@@ -308,7 +364,9 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 				y_ref_j = model->Eval(bins[j].t_repr);
 			}
 
-			double &e = m_cov_inv(i, j);
+			double &e = m_cov(i, j);
+
+			e = 0;
 
 			if (use_stat_unc && i == j)
 				e += pow(bins[i].dsdt_unc_stat, 2);
@@ -318,6 +376,9 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 		}
 	}
 
+	// invert covariance matrix
+	m_cov_inv.ResizeTo(m_cov);
+	m_cov_inv = m_cov;
 	m_cov_inv.Invert();
 }
 
@@ -326,6 +387,14 @@ void Dataset::Update(const Model *model, bool use_stat_unc, bool use_syst_unc)
 struct Data
 {
 	vector<Dataset> datasets;
+
+	unsigned int NPoints() const
+	{
+		unsigned int n = 0;
+		for (const auto &ds : datasets)
+			n += ds.bins.size();
+		return n;
+	}
 
 	// use initial settings (bin representative points, covariance matrix)
 	void UpdateInitial(bool use_stat_unc, bool use_syst_unc)
@@ -370,7 +439,7 @@ void Metric::SetModelParameters(const double *par)
 	for (auto &ds : data.datasets)
 		ds.eta = par[0];
 
-	model.hfm->a = par[1] * 1E8;
+	model.hfm->a = par[1] * 1E6;
 
 	for (unsigned int bi = 0; bi <= model.n_b; ++bi)
 	{
@@ -390,16 +459,27 @@ double Metric::operator() (const double *par)
 	// decode parameters
 	SetModelParameters(par);
 
+	// TODO: remove
+	//printf("* operator()\n");
+
 	// loop over datasets
 	double s2 = 0;
 	for (const auto &d : data.datasets)
 	{
 		unsigned int dim = d.bins.size();
 
+		// TODO: remove
+		//printf("    %s, dim = %u\n", d.tag.c_str(), dim);
+
 		// build vector of differences
 		vector<double> diff(dim);
 		for (unsigned int i = 0; i < dim; ++i)
+		{
+			// TODO: remove
+			//printf("    i = %i, t_repr = %.4f, dsdt = %.2f, model = %.2f\n", i, d.bins[i].t_repr, d.bins[i].dsdt, model.Eval(d.bins[i].t_repr));
+
 			diff[i] = d.bins[i].dsdt - d.eta * model.Eval(d.bins[i].t_repr);
+		}
 
 		// calculate sum of squares
 		for (unsigned int i = 0; i < dim; ++i)
@@ -408,6 +488,9 @@ double Metric::operator() (const double *par)
 				s2 += diff[i] * d.m_cov_inv(i, j) * diff[j];
 		}
 	}
+
+	// TODO: remove
+	//printf("    s2 = %.2E\n", s2);
 
 	return s2;
 }
@@ -441,6 +524,8 @@ struct Minimization
 	void PrintResults() const;
 
 	void ResultToModel();
+
+	void WriteGraphs() const;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -452,9 +537,9 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	fitter.SetFCN(model.n_fit_parameters, metric, pStart, 0, true);
 
 	// initialize parameters
-	fitter.Config().ParSettings(0).Set("eta", is.eta, 0.05);
+	fitter.Config().ParSettings(0).Set("eta", is.eta, 0.05, 0.70, 1.30);
 
-	fitter.Config().ParSettings(1).Set("a", is.a / 1E8, is.a / 1E8 / 10);
+	fitter.Config().ParSettings(1).Set("a", is.a / 1E6, is.a / 1E6 / 10);
 
 	for (unsigned int i = 0; i < model.n_b; ++i)
 	{
@@ -486,6 +571,11 @@ void Minimization::Minimize()
 void Minimization::PrintResults() const
 {
 	const ROOT::Fit::FitResult &result = fitter.Result();
+
+	unsigned int ndf = data.NPoints() - model.n_fit_parameters;
+
+	printf("chi^2 = %.2f, ndf = %u, chi^2/ndf = %.3f\n", result.Chi2(), ndf, result.Chi2() / ndf);
+
 	for (unsigned int i = 0; i < result.NPar(); ++i)
 		printf("idx %u [%3s]: %+.3E +- %.3E\n", i, result.ParName(i).c_str(), result.Parameter(i), sqrt(result.CovMatrix(i, i)));
 }
@@ -500,6 +590,58 @@ void Minimization::ResultToModel()
 		par[i] = result.Parameter(i);
 
 	metric.SetModelParameters(par);
+}
+
+//----------------------------------------------------------------------------------------------------
+
+void Minimization::WriteGraphs() const
+{
+	TDirectory *d_top = gDirectory;
+
+	for (const auto &ds : data.datasets)
+	{
+		gDirectory = d_top->mkdir(ds.tag.c_str());
+		ds.Write();
+	}
+
+	gDirectory = d_top;
+
+	unique_ptr<TGraph> g_fit_C(new TGraph), g_fit_H(new TGraph), g_fit_CH(new TGraph);
+
+	g_fit_C->SetName("g_fit_C");
+	g_fit_C->SetLineColor(4);
+
+	g_fit_H->SetName("g_fit_H");
+	g_fit_H->SetLineColor(8);
+
+	g_fit_CH->SetName("g_fit_CH");
+	g_fit_CH->SetLineColor(2);
+
+	for (double t = 1E-4; t <= 0.1; )
+	{
+		const double v_C = model.Eval(t, Model::cC);
+		const double v_H = model.Eval(t, Model::cH);
+		const double v_CH = model.Eval(t, Model::cCH);
+
+		int idx = g_fit_C->GetN();
+
+		g_fit_C->SetPoint(idx, t, v_C);
+		g_fit_H->SetPoint(idx, t, v_H);
+		g_fit_CH->SetPoint(idx, t, v_CH);
+
+		double dt = 0.5E-4;
+		if (t > 0.006)
+			dt = 0.002;
+		if (t > 0.1)
+			dt = 0.02;
+		t += dt;
+	}
+
+	unique_ptr<TCanvas> c_fit_cmp(new TCanvas("c_fit_cmp"));
+	g_fit_CH->Draw("al");
+	g_fit_C->Draw("l");
+	g_fit_H->Draw("l");
+	c_fit_cmp->Write();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -556,9 +698,9 @@ int main(int argc, const char **argv)
 
 	InitialSettings is;
 	is.eta = 1;
-	is.a = 0.;	// TODO: better defaults
-	is.b1 = 0.;
-	is.p0 = 0.;
+	is.a = 5.64E6;
+	is.b1 = 8.5;
+	is.p0 = M_PI - atan(0.10);
 
 	unsigned int n_iterations = 3;
 
@@ -634,6 +776,15 @@ int main(int argc, const char **argv)
 	printf("    output_root=%s\n", output_root.c_str());
 	printf("    output_results=%s\n", output_results.c_str());
 
+	// open output file
+	bool save_root = false;
+	unique_ptr<TFile> f_root;
+	if (!output_root.empty())
+	{
+		save_root = true;
+		f_root = make_unique<TFile>(output_root.c_str(), "recreate");
+	}
+
 	// load data
 	Data data;
 	{
@@ -644,7 +795,7 @@ int main(int argc, const char **argv)
 			double t_min = 0., t_max = 1.;
 			if (item == "low_beta") { t_min = t_min_low_beta; t_max = t_max_low_beta; }
 			if (item == "high_beta") { t_min = t_min_high_beta; t_max = t_max_high_beta; }
-			data.datasets.emplace_back(Dataset{input_file, input_binning+"/"+item, t_min, t_max});
+			data.datasets.emplace_back(Dataset{item, input_file, input_binning+"/"+item, t_min, t_max});
 		}
 	}
 
@@ -653,6 +804,10 @@ int main(int argc, const char **argv)
 		printf("ERROR: no datasets given.\n");
 		return 10;
 	}
+	
+	printf("* datasets:\n");
+	for (const auto &ds : data.datasets)
+		printf("    %s, n_bins = %lu\n", ds.tag.c_str(), ds.bins.size());
 
 	// initializations
 	Model model(n_b);
@@ -664,9 +819,18 @@ int main(int argc, const char **argv)
 	// run iterations
 	for (unsigned int it = 0; it < n_iterations; ++it)
 	{
+		printf("\n----- iteration %i -----\n", it);
+	
+		if (save_root)
+		{
+			char buf[100];
+			sprintf(buf, "iteration %i", it);
+			gDirectory = f_root->mkdir(buf);
+		}
+
 		if (it == 0)
 		{
-			data.UpdateInitial(use_syst_unc, use_syst_unc);
+			data.UpdateInitial(use_stat_unc, use_syst_unc);
 			model.ResetCaches();
 		} else {
 			data.Update(model, use_stat_unc, use_syst_unc);
@@ -675,8 +839,22 @@ int main(int argc, const char **argv)
 
 		minimization.Minimize();
 
+		printf("* after minimization:\n");
+		minimization.PrintResults();
+
 		minimization.ResultToModel();
+
+		// save details/debug info
+		if (save_root)
+		{
+			model.WriteCaches();
+			minimization.WriteGraphs();
+		}
 	}
+	
+	printf("----- aftern iterations -----\n");
+	
+	gDirectory = f_root->mkdir("final");
 
 	// save results
 	// TODO
