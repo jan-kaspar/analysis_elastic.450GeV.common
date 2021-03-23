@@ -153,15 +153,14 @@ function SimuComparison()
 		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_H"
 		MakeOneComparison "data/simu/$simu_version/models.root" "$simu_model/g_dsdt_CH"
 
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_full/seed_$simu_seed/histograms.root" "$simu_binning/low_beta/h_dsdt_cen_stat"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_full/seed_$simu_seed/histograms.root" "$simu_binning/high_beta/h_dsdt_cen_stat"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/histograms.root" "$simu_binning/low_beta/h_dsdt_cen_stat"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/histograms.root" "$simu_binning/high_beta/h_dsdt_cen_stat"
 
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_syst/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_norm/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
-
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_full/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_full/process_histograms.root" "$simu_binning/high_beta/h_stddev_rel"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_histograms.root" "$simu_binning/high_beta/h_stddev_rel"
 
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit.root" "iteration 2/g_psi_re"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit.root" "iteration 2/g_psi_im"
