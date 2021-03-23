@@ -9,7 +9,7 @@ input_version="version_TEST"
 
 binnings="sb1,sb2,sb3"
 
-errors="stat syst norm full"
+errors="none stat syst norm stat,syst,norm"
 
 # parse command line
 function PrintUsage()
@@ -107,13 +107,11 @@ do
 		e_syst="0"
 		e_norm="0"
 
-		if [ "$error_model" == "stat" ]; then e_stat="1"; fi
-		if [ "$error_model" == "syst" ]; then e_syst="1"; fi
-		if [ "$error_model" == "norm" ]; then e_norm="1"; fi
-		if [ "$error_model" == "full" ]; then e_stat="1"; e_syst="1"; e_norm="1"; fi
+		if [[ "$error_model" == *"stat"* ]]; then e_stat="1"; fi
+		if [[ "$error_model" == *"syst"* ]]; then e_syst="1"; fi
+		if [[ "$error_model" == *"norm"* ]]; then e_norm="1"; fi
 
-		run_fits="0"
-		if [ "$error_model" == "full" ]; then run_fits="1"; fi
+		run_fits="1"
 
 		for seed in `seq 1 $n_repetitions`
 		do
@@ -129,7 +127,7 @@ do
 
 			if [ "$run_fits" == "1" ]
 			then
-				$BASE_DIR/.make_fit &> "fit.log" || exit 23
+				$BASE_DIR/.make_fit -input-file "histograms.root" -output-root "fit.root" -output-results "fit.results" &> "fit.log" || exit 23
 			fi
 		
 			cd ..
