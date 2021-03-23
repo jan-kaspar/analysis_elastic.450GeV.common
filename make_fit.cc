@@ -703,6 +703,8 @@ void Minimization::WriteGraphs() const
 		t += dt;
 	}
 
+	g_fit_CH->Write();
+
 	unique_ptr<TCanvas> c_fit_cmp(new TCanvas("c_fit_cmp"));
 	g_fit_CH->Draw("al");
 	g_fit_C->Draw("l");
