@@ -127,7 +127,11 @@ do
 
 			if [ "$run_fits" == "1" ]
 			then
-				$BASE_DIR/.make_fit -input-file "histograms.root" -output-root "fit.root" -output-results "fit.results" &> "fit.log" || exit 23
+				$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta" \
+					-output-root "fit_high.root" -output-results "fit_high.results" &> "fit_high.log" || exit 23
+
+				$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta,low_beta" \
+					-output-root "fit_both.root" -output-results "fit_both.results" &> "fit_both.log" || exit 23
 			fi
 		
 			cd ..
@@ -137,7 +141,11 @@ do
 
 		if [ "$run_fits" == "1" ]
 		then
-			$BASE_DIR/.simu_process_fits -seed-min 1 -seed-max $n_repetitions &> "process_fits.log" || exit 25
+			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_high.root"\
+				-seed-min 1 -seed-max $n_repetitions -output "process_fits_high.root" &> "process_fits_high.log" || exit 25
+
+			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_both.root"\
+				-seed-min 1 -seed-max $n_repetitions -output "process_fits_both.root" &> "process_fits_both.log" || exit 25
 		fi
 
 		cd ..
