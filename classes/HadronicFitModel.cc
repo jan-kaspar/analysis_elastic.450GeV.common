@@ -47,7 +47,6 @@ TComplex HadronicFitModel::Amp(double t) const
 		bPol += b5 * tPow;
 		const double m1 = a * exp(bPol);
 
-		m = m1;
 		if (t > t_opt_m1)
 		{
 			// optimisation for very low |t|: only m1 component
