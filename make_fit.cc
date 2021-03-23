@@ -922,11 +922,17 @@ int main(int argc, const char **argv)
 	
 	printf("----- after iterations -----\n");
 	
-	gDirectory = f_root->mkdir("final");
-
 	// save results
+	const auto &results = minimization.GetResults();
+
+	if (save_root)
+	{
+		gDirectory = f_root->mkdir("final");
+		results.ExportROOT()->Write("results");
+	}
+
 	if (!output_results.empty())
-		minimization.GetResults().Write(output_results);
+		results.Write(output_results);
 
 	return 0;
 }
