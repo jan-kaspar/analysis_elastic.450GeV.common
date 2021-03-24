@@ -8,6 +8,7 @@
 #include "TVectorD.h"
 #include "TRandom.h"
 #include "TMatrixDSymEigen.h"
+#include "TSpline.h"
 
 #include <cstdio>
 #include <cstring>
@@ -21,6 +22,8 @@ using namespace std;
 
 void BuildModelHistogram(const TGraph *g_model, const TH1D *h_input, int bi_min, int bi_max, TH1D *h_simu_ideal)
 {
+	unique_ptr<TSpline3> s_model(new TSpline3("splinePsiRe", g_model->GetX(), g_model->GetY(), g_model->GetN()));
+
 	for (int bi = bi_min; bi <= bi_max; ++bi)
 	{
 		const double l = h_input->GetBinLowEdge(bi);
@@ -28,12 +31,12 @@ void BuildModelHistogram(const TGraph *g_model, const TH1D *h_input, int bi_min,
 		const double input_c = h_input->GetBinContent(bi);
 		const double input_u = h_input->GetBinError(bi);
 
-		const unsigned int n_div = 10;
+		const unsigned int n_div = 100;
 		double c = 0.;
 		for (unsigned j = 0; j < n_div; ++j)
 		{
 			const double t = l + (double(j) + 0.5) * w / n_div;
-			c += g_model->Eval(t) / n_div;
+			c += s_model->Eval(t) / n_div;
 		}
 
 		h_simu_ideal->SetBinContent(bi, c);
