@@ -65,7 +65,7 @@ void SampleModel(Model *m, const string &label)
 	TComplex F_H_ep = model->Amp(-ep);
 
 	const double A = cnts->sig_fac * F_H_0.Rho2();
-	const double b1 = (log(F_H_0.Rho2()) - log(F_H_ep.Rho2())) / ep;
+	const double b1 = (log(F_H_0.Rho2()) - log(F_H_ep.Rho2())) / ep / 2.;
 	const double rho = F_H_0.Re() / F_H_0.Im();
 	const double p0 = M_PI/2. - atan(rho);
 	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
