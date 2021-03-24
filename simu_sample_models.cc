@@ -9,6 +9,7 @@
 #include "TGraph.h"
 #include <TComplex.h>
 
+#include <cstdio>
 #include <cstring>
 
 using namespace std;
@@ -20,7 +21,6 @@ void PrintUsage()
 {
 	printf("USAGE: program <option> <option>\n");
 	printf("OPTIONS:\n");
-	//printf("    -cfg <file>       config file\n");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -33,11 +33,14 @@ void SampleModel(Model *m, const string &label)
 
 	gDirectory = d_top->mkdir(label.c_str());
 
+	printf("* sampling model %s\n", label.c_str());
+	model->Print();
+
 	// make graphs
 	TGraph *g_dsdt_H = new TGraph();
 	TGraph *g_dsdt_CH = new TGraph();
 
-	for (double mt = 1E-4; mt <= 0.11; )
+	for (double mt = 0.9E-4; mt <= 0.11; )
 	{
 		coulomb->mode = CoulombInterference::mPH;
 		TComplex F_H = coulomb->Amp(-mt);
@@ -50,9 +53,9 @@ void SampleModel(Model *m, const string &label)
 		g_dsdt_CH->SetPoint(idx, mt, cnts->sig_fac * F_CH.Rho2());
 
 		double dmt = 5E-3;
-		if (mt < 0.10) dmt = 1E-3;
+		if (mt < 0.10) dmt = 5E-4;
 		if (mt < 0.004) dmt = 1E-4;
-		if (mt < 0.001) dmt = 1E-5;
+		if (mt < 0.001) dmt = 5E-6;
 		mt += dmt;
 	}
 
@@ -121,13 +124,14 @@ int main(int argc, const char **argv)
 
 	coulomb->mode = CoulombInterference::mKL;
 
+	hfm->modulusMode = HadronicFitModel::mmExp;
 	hfm->a = 5.67E6;
 	hfm->b1 = 8.5;
 	hfm->b2 = 0.;
 	hfm->b3 = 0.;
 
-	hfm->t1 = 0.2;
-	hfm->t2 = 0.5;
+	hfm->t1 = 0.5;
+	hfm->t2 = 1.5;
 
 	hfm->phaseMode = HadronicFitModel::pmConstant;
 
