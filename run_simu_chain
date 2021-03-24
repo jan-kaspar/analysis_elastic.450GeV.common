@@ -79,6 +79,49 @@ then
 	exit 2
 fi
 
+#----------------------------------------------------------------------------------------------------
+
+function RunOne()
+{
+	for seed in `seq 1 $n_repetitions`
+	do
+		echo "* $model, $error_model, seed $seed"
+
+		mkdir -p "seed_$seed"
+		cd "seed_$seed"
+
+		$BASE_DIR/.simu_make_histograms -model-file "../../../models.root" -model-obj "$model/g_dsdt_CH" \
+			-input-file "$BASE_DIR/data/input/$input_version/import.root" -binnings "$binnings" -seed $seed \
+			-sim-stat-err $e_stat -sim-syst-err $e_syst -sim-norm-err $e_norm\
+			&> "histograms.log" || exit 22
+
+		if [ "$run_fits" == "1" ]
+		then
+			$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta" \
+				-output-root "fit_high.root" -output-results "fit_high.results" &> "fit_high.log" || exit 23
+
+			$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta,low_beta" \
+				-output-root "fit_both.root" -output-results "fit_both.results" &> "fit_both.log" || exit 23
+		fi
+	
+		cd ..
+	done
+
+	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions -binnings "$binnings" &> "process_histograms.log" || exit 24
+
+	if [ "$run_fits" == "1" ]
+	then
+		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_high.root"\
+			-seed-min 1 -seed-max $n_repetitions -output "process_fits_high.root" &> "process_fits_high.log" || exit 25
+
+		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_both.root"\
+			-seed-min 1 -seed-max $n_repetitions -output "process_fits_both.root" &> "process_fits_both.log" || exit 25
+	fi
+}
+
+
+#----------------------------------------------------------------------------------------------------
+
 # execute
 make -j8 || exit 3
 
@@ -91,15 +134,11 @@ $BASE_DIR/.simu_sample_models &> "models.log" || exit 21
 
 for model in $models
 do
-	echo "* $model"
-
 	mkdir -p "$model"
 	cd "$model"
 
 	for error_model in $errors
 	do
-		echo "  - $error_model"
-
 		mkdir -p "errors_$error_model"
 		cd "errors_$error_model"
 
@@ -113,43 +152,12 @@ do
 
 		run_fits="1"
 
-		for seed in `seq 1 $n_repetitions`
-		do
-			echo "    -> $seed"
-
-			mkdir -p "seed_$seed"
-			cd "seed_$seed"
-
-			$BASE_DIR/.simu_make_histograms -model-file "../../../models.root" -model-obj "$model/g_dsdt_CH" \
-				-input-file "$BASE_DIR/data/input/$input_version/import.root" -binnings "$binnings" -seed $seed \
-				-sim-stat-err $e_stat -sim-syst-err $e_syst -sim-norm-err $e_norm\
-				&> "histograms.log" || exit 22
-
-			if [ "$run_fits" == "1" ]
-			then
-				$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta" \
-					-output-root "fit_high.root" -output-results "fit_high.results" &> "fit_high.log" || exit 23
-
-				$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta,low_beta" \
-					-output-root "fit_both.root" -output-results "fit_both.results" &> "fit_both.log" || exit 23
-			fi
-		
-			cd ..
-		done
-
-		$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions -binnings "$binnings" &> "process_histograms.log" || exit 24
-
-		if [ "$run_fits" == "1" ]
-		then
-			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_high.root"\
-				-seed-min 1 -seed-max $n_repetitions -output "process_fits_high.root" &> "process_fits_high.log" || exit 25
-
-			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_both.root"\
-				-seed-min 1 -seed-max $n_repetitions -output "process_fits_both.root" &> "process_fits_both.log" || exit 25
-		fi
+		RunOne &
 
 		cd ..
 	done
 
 	cd ..
 done
+
+wait
