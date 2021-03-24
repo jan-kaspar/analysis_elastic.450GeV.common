@@ -12,6 +12,7 @@
 .*
 
 data
+plots.local
 
 compile_commands.json
 makefile
