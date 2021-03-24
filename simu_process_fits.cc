@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <memory>
+#include <string>
 
 using namespace std;
 
@@ -81,22 +82,22 @@ int main(int argc, const char **argv)
 
 		shared_ptr<TH1D> h_diff;
 
-		ParameterInfo(const string &_t) : tag(_t), h_diff(new TH1D("", "", 10, 0., 0.)) {}
+		ParameterInfo(const string &_t, double _r) : tag(_t), h_diff(new TH1D("", "", 40, -_r, +_r)) {}
 	};
 
 	vector<ParameterInfo> parameters = {
-		{"eta"},
-		{"eta_unc"},
-		{"A"},
-		{"A_unc"},
-		{"b1"},
-		{"b1_unc"},
-		{"p0"},
-		{"p0_unc"},
-		{"rho"},
-		{"rho_unc"},
-		{"si_tot"},
-		{"si_tot_unc"},
+		{"eta", 0.3},
+		{"eta_unc", 0.3},
+		{"A", 15},
+		{"A_unc", 15},
+		{"b1", 4},
+		{"b1_unc", 4},
+		{"p0", 0.1},
+		{"p0_unc", 0.1},
+		{"rho", 0.1},
+		{"rho_unc", 0.1},
+		{"si_tot", 3},
+		{"si_tot_unc", 3},
 	};
 
 	// prepare data
@@ -122,10 +123,15 @@ int main(int argc, const char **argv)
 		{
 			const auto &p = parameters[pi];
 
+			bool p_is_unc = (p.tag.find("_unc") != string::npos);
+
 			const double v_ref = r_ref.Get(p.tag);
 			const double v_test = r_test.Get(p.tag);
 
-			diff[pi] = v_test - v_ref;
+			if (p_is_unc)
+				diff[pi] = v_test;
+			else
+				diff[pi] = v_test - v_ref;
 
 			p.h_diff->Fill(diff[pi]);
 		}
@@ -146,7 +152,7 @@ int main(int argc, const char **argv)
 
 		unique_ptr<TGraph> g_data(new TGraph());
 		g_data->SetPoint(0, st.GetMean(pi), st.GetMeanUnc(pi));
-		g_data->SetPoint(1, st.GetStdDev(pi), st.GetStdDevUnc(pi));
+		g_data->SetPoint(1, st.GetStdDev(pi), st.GetStdDevUncGauss(pi));
 		g_data->Write("g_data");
 	}
 
