@@ -1,8 +1,7 @@
 import root;
 import pad_layout;
+include "../common.asy";
 include "shared.asy";
-
-string topDir = "../../";
 
 string datasets[], d_labels[];
 datasets.push("low_beta"); d_labels.push("low beta");
@@ -12,7 +11,7 @@ string errors[], e_labels[];
 errors.push("stat"); e_labels.push("stat");
 errors.push("syst"); e_labels.push("syst");
 errors.push("norm"); e_labels.push("norm");
-errors.push("full"); e_labels.push("full");
+errors.push("stat,syst,norm"); e_labels.push("stat,syst,norm");
 
 TH2_palette = Gradient(blue, yellow, red);
 
