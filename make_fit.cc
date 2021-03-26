@@ -1,3 +1,4 @@
+#include <Elegent/Model.h>
 #include "classes/command_line_tools.hh"
 #include "classes/HadronicFitModel.hh"
 #include "classes/Result.hh"
@@ -235,10 +236,6 @@ Dataset::Dataset(const string &_tag, const string &file, const string &directory
 	const int bi_max = h_dsdt_cen_stat->FindBin(t_max);
 	const int dim = bi_max - bi_min + 1;
 
-	// TODO: remove
-	//printf("t_min = %.4f, t_max = %.4f\n", t_min, t_max);
-	//printf("bi_min = %i, bi_max = %i\n", bi_min, bi_max);
-
 	// extract bin data
 	bins.resize(dim);
 	for (int bi = bi_min; bi <= bi_max; ++bi)
@@ -423,6 +420,8 @@ struct Metric
 
 	void SetModelParameters(const double *par);
 
+	double CalculateChi2(bool debug) const;
+
 	double operator() (const double *par);
 };
 
@@ -441,7 +440,7 @@ void Metric::SetModelParameters(const double *par)
 
 	model.hfm->a = par[1] * 1E6;
 
-	for (unsigned int bi = 0; bi <= model.n_b; ++bi)
+	for (unsigned int bi = 0; bi < model.n_b; ++bi)
 	{
 		if (bi == 0) model.hfm->b1 = par[2 + bi];
 		if (bi == 1) model.hfm->b2 = par[2 + bi];
@@ -454,32 +453,18 @@ void Metric::SetModelParameters(const double *par)
 
 //----------------------------------------------------------------------------------------------------
 
-double Metric::operator() (const double *par)
+double Metric::CalculateChi2(bool debug) const
 {
-	// decode parameters
-	SetModelParameters(par);
-
-	// TODO: remove
-	//printf("* operator()\n");
-
 	// loop over datasets
 	double s2 = 0;
 	for (const auto &d : data.datasets)
 	{
 		unsigned int dim = d.bins.size();
 
-		// TODO: remove
-		//printf("    %s, dim = %u\n", d.tag.c_str(), dim);
-
 		// build vector of differences
 		vector<double> diff(dim);
 		for (unsigned int i = 0; i < dim; ++i)
-		{
-			// TODO: remove
-			//printf("    i = %i, t_repr = %.4f, dsdt = %.2f, model = %.2f\n", i, d.bins[i].t_repr, d.bins[i].dsdt, model.Eval(d.bins[i].t_repr));
-
 			diff[i] = d.bins[i].dsdt - d.eta * model.Eval(d.bins[i].t_repr);
-		}
 
 		// calculate sum of squares
 		for (unsigned int i = 0; i < dim; ++i)
@@ -487,12 +472,27 @@ double Metric::operator() (const double *par)
 			for (unsigned int j = 0; j < dim; ++j)
 				s2 += diff[i] * d.m_cov_inv(i, j) * diff[j];
 		}
+
+		if (debug)
+		{
+			for (unsigned int i = 0; i < dim; ++i)
+			{
+				const double c = diff[i] * d.m_cov_inv(i, i) * diff[i];
+				printf("    %s, bin %i: diff = %.3f, c = %.2E\n", d.tag.c_str(), i, diff[i], c);
+			}
+		}
 	}
 
-	// TODO: remove
-	//printf("    s2 = %.2E\n", s2);
-
 	return s2;
+}
+
+//----------------------------------------------------------------------------------------------------
+
+double Metric::operator() (const double *par)
+{
+	SetModelParameters(par);
+
+	return CalculateChi2(false);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -520,6 +520,8 @@ struct Minimization
 	Minimization(const Data &da, Model &mo, Metric &me, const InitialSettings &is);
 
 	void Minimize();
+
+	void PrintState() const;
 
 	void PrintResults() const;
 
@@ -558,6 +560,13 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	}
 
 	fitter.Config().ParSettings(model.n_b + 2).Set("p0", is.p0, 0.01);
+
+	// set parameters to model
+	double par[model.n_fit_parameters];
+	for (unsigned int i = 0; i < model.n_fit_parameters; ++i)
+		par[i] = fitter.Config().ParamsValues()[i];
+
+	metric.SetModelParameters(par);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -634,13 +643,25 @@ void Minimization::Minimize()
 
 //----------------------------------------------------------------------------------------------------
 
+void Minimization::PrintState() const
+{
+	for (unsigned int i = 0; i < fitter.Config().NPar(); ++i)
+	{
+		const auto &pd = fitter.Config().ParSettings(i);
+		printf("idx %i [%3s]: val=%.3f, step=%.3f, min=%.3f, max=%.3f\n", i, pd.Name().c_str(),
+			pd.Value(), pd.StepSize(), pd.LowerLimit(), pd.UpperLimit());
+	}
+}
+
+//----------------------------------------------------------------------------------------------------
+
 void Minimization::PrintResults() const
 {
 	const ROOT::Fit::FitResult &result = fitter.Result();
 
 	unsigned int ndf = data.NPoints() - model.n_fit_parameters;
 
-	printf("chi^2 = %.2f, ndf = %u, chi^2/ndf = %.3f\n", result.Chi2(), ndf, result.Chi2() / ndf);
+	printf("chi^2 = %.3f, ndf = %u, chi^2/ndf = %.3f\n", result.Chi2(), ndf, result.Chi2() / ndf);
 
 	for (unsigned int i = 0; i < result.NPar(); ++i)
 		printf("idx %u [%3s]: %+.3E +- %.3E\n", i, result.ParName(i).c_str(), result.Parameter(i), sqrt(result.CovMatrix(i, i)));
@@ -739,10 +760,11 @@ void PrintUsage()
 	printf("    -init-b1 <double>           initial value of b1\n");
 	printf("    -init-p0 <double>           initial value of p0\n");
 
-	printf("    -n-iterations <integer>     number of fit iterations\n");
+	printf("    -n-iterations <integer>             number of fit iterations\n");
+	printf("    -use-safe-first-iteration <bool>    don't use init model for adjustments\n");
 
-	printf("    -output-root <string>       output ROOT file\n");
-	printf("    -output-results <string>    output result file\n");
+	printf("    -output-root <string>               output ROOT file\n");
+	printf("    -output-results <string>            output result file\n");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -763,10 +785,11 @@ int main(int argc, const char **argv)
 	bool use_syst_unc = true;
 
 	unsigned int n_b = 1;
+	bool use_safe_first_iteration = false;
 
 	InitialSettings is;
 	is.eta = 1;
-	is.a = 5.64E6;
+	is.a = 5.67E6;
 	is.b1 = 8.5;
 	is.p0 = M_PI/2. - atan(0.10);
 
@@ -804,6 +827,7 @@ int main(int argc, const char **argv)
 		if (TestDoubleParameter(argc, argv, argi, "-init-p0", is.p0)) continue;
 
 		if (TestUIntParameter(argc, argv, argi, "-n-iterations", n_iterations)) continue;
+		if (TestBoolParameter(argc, argv, argi, "-use-safe-first-iteration", use_safe_first_iteration)) continue;
 
 		if (TestStringParameter(argc, argv, argi, "-output-root", output_root)) continue;
 		if (TestStringParameter(argc, argv, argi, "-output-results", output_results)) continue;
@@ -840,6 +864,7 @@ int main(int argc, const char **argv)
 	printf("    is.p0=%.3f\n", is.p0);
 
 	printf("    n_iterations=%u\n", n_iterations);
+	printf("    use_safe_first_iteration=%u\n", use_safe_first_iteration);
 
 	printf("    output_root=%s\n", output_root.c_str());
 	printf("    output_results=%s\n", output_results.c_str());
@@ -896,7 +921,7 @@ int main(int argc, const char **argv)
 			gDirectory = f_root->mkdir(buf);
 		}
 
-		if (it == 0)
+		if (it == 0 && use_safe_first_iteration)
 		{
 			data.UpdateInitial(use_stat_unc, use_syst_unc);
 			model.ResetCaches();
@@ -905,12 +930,19 @@ int main(int argc, const char **argv)
 			model.UpdateCaches();
 		}
 
+		printf("* before minimization:\n");
+		minimization.PrintState();
+
+		printf("check: chi^2 = %.3f\n", metric.CalculateChi2(false));
+
 		minimization.Minimize();
 
 		printf("* after minimization:\n");
 		minimization.PrintResults();
 
 		minimization.ResultToModel();
+
+		printf("check: chi^2 = %.3f\n", metric.CalculateChi2(false));
 
 		// save details/debug info
 		if (save_root)
@@ -920,7 +952,7 @@ int main(int argc, const char **argv)
 		}
 	}
 	
-	printf("----- after iterations -----\n");
+	printf("\n----- after iterations -----\n");
 	
 	// save results
 	const auto &results = minimization.GetResults();
