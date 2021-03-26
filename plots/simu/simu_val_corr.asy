@@ -15,6 +15,9 @@ errors.push("stat,syst,norm"); e_labels.push("stat,syst,norm");
 
 TH2_palette = Gradient(blue, yellow, red);
 
+TH2_z_min = -1.001;
+TH2_z_max = +1.001;
+
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
@@ -36,3 +39,5 @@ for (int dsi : datasets.keys)
 		draw(RootGetObject(f, o));
 	}
 }
+
+GShipout(vSkip=0mm);

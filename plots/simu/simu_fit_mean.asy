@@ -53,6 +53,8 @@ for (int fi : fit_types.keys)
 	{
 		NewPad(p_labels[pari]);
 
+		draw((0, 0)--(0, errors.length-1), heavygreen + dashed + 1pt);
+
 		for (int ei : errors.keys)
 		{
 			string f = topDir + "data/simu/" + version + "/" + model + "/errors_" + errors[ei] + "/process_fits_" + fit_types[fi] + ".root";
@@ -70,8 +72,6 @@ for (int fi : fit_types.keys)
 			draw((mean, y-dy)--(mean, y+dy), red);
 			draw((mean - mean_unc, y)--(mean + mean_unc, y), red);
 		}
-
-		draw((0, 0)--(0, errors.length-1), heavygreen + dashed);
 
 		//AttachLegend(BuildLegend(NW), NE);
 	}
