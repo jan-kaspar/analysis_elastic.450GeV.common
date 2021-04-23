@@ -16,7 +16,9 @@ void PrintUsage()
 {
 	printf("USAGE: program <option> <option>\n");
 	printf("OPTIONS:\n");
-	//printf("    -cfg <file>       config file\n");
+	printf("    -dir-low-beta <dir>       input directory with low-beta data\n");
+	printf("    -dir-high-beta <dir>      input directory with high-beta data\n");
+	printf("    -binnings <string>        comma-separated list of binnings\n");
 }
 
 //----------------------------------------------------------------------------------------------------
