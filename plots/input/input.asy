@@ -3,20 +3,21 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-string input_file = topDir + "data/input/version_TEST/import.root";
+string input_file = topDir + "data/input/version_0/import.root";
 
 string binning = "sb1";
 
 string datasets[], d_labels[];
 pen d_pens[];
-datasets.push("high_beta"); d_labels.push("high $\be^*$"); d_pens.push(red + squarecap);
-datasets.push("low_beta"); d_labels.push("low $\be^*$"); d_pens.push(blue + squarecap);
+real d_scale[];
+datasets.push("high_beta"); d_labels.push("high $\be^*$"); d_pens.push(red + squarecap); d_scale.push(1);
+datasets.push("low_beta"); d_labels.push("low $\be^*$"); d_pens.push(blue + squarecap); d_scale.push(1);
 
 TGraph_errorBar = None;
 
 //----------------------------------------------------------------------------------------------------
 
-void DrawSystematics(RootObject h_cen, RootObject h_rel, pen p)
+void DrawSystematics(transform t, RootObject h_cen, RootObject h_rel, pen p)
 {
 	for (int bi = 1; bi <= h_cen.iExec("GetNbinsX"); ++bi)
 	{
@@ -31,8 +32,8 @@ void DrawSystematics(RootObject h_cen, RootObject h_rel, pen p)
 		if (dsdt <= 0)
 			continue;
 
-		draw(Scale((t_left, dsdt-dsdt_unc))--Scale((t_right, dsdt-dsdt_unc)), p);
-		draw(Scale((t_left, dsdt+dsdt_unc))--Scale((t_right, dsdt+dsdt_unc)), p);
+		draw(t * (Scale((t_left, dsdt-dsdt_unc))--Scale((t_right, dsdt-dsdt_unc))), p);
+		draw(t * (Scale((t_left, dsdt+dsdt_unc))--Scale((t_right, dsdt+dsdt_unc))), p);
 	}
 }
 
@@ -53,8 +54,11 @@ void DrawOne(int h_idx, real t_min, real t_max, real x_size)
 		RootObject h_dsdt_cen_stat = RootGetObject(input_file, binning + "/" + ds + "/h_dsdt_cen_stat");
 		RootObject h_dsdt_rel_syst = RootGetObject(input_file, binning + "/" + ds + "/h_dsdt_rel_syst");
 
-		draw(h_dsdt_cen_stat, "vl,eb", p, d_labels[dsi]);
-		DrawSystematics(h_dsdt_cen_stat, h_dsdt_rel_syst, p);
+		real s = d_scale[dsi];
+		transform t = shift(0, log10(s));
+
+		draw(t, h_dsdt_cen_stat, "vl,eb", p, d_labels[dsi]);
+		DrawSystematics(t, h_dsdt_cen_stat, h_dsdt_rel_syst, p);
 	}
 
 	xlimits(t_min, t_max, Crop);
