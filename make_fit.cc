@@ -776,10 +776,10 @@ int main(int argc, const char **argv)
 	string input_datasets = "high_beta,low_beta";
 	string input_binning = "sb1";
 
-	double t_min_low_beta = 0.015;
-	double t_max_low_beta = 0.09;
-	double t_min_high_beta = 2.1E-4;
-	double t_max_high_beta = 0.025;
+	double t_min_low_beta = 0.017;
+	double t_max_low_beta = 0.053;
+	double t_min_high_beta = 3.1E-4;
+	double t_max_high_beta = 0.023;
 
 	bool use_stat_unc = true;
 	bool use_syst_unc = true;
