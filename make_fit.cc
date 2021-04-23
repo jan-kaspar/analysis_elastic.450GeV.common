@@ -1,10 +1,10 @@
-#include <Elegent/Model.h>
 #include "classes/command_line_tools.hh"
 #include "classes/HadronicFitModel.hh"
 #include "classes/Result.hh"
 
 #include "Elegent/Constants.h"
 #include "Elegent/CoulombInterference.h"
+#include "Elegent/Model.h"
 
 #include "TFile.h"
 #include "TH1D.h"
@@ -17,6 +17,7 @@
 #include "TSpline.h"
 #include "TCanvas.h"
 #include "TDirectory.h"
+#include "TMath.h"
 
 #include <cstdio>
 #include <cstring>
@@ -578,6 +579,13 @@ Result Minimization::GetResults() const
 	Result r;
 	
 	const ROOT::Fit::FitResult &fr = fitter.Result();
+
+	unsigned int ndf = data.NPoints() - model.n_fit_parameters;
+
+	r.Set("chi2", fr.Chi2());
+	r.Set("ndf", ndf);
+	r.Set("chi2_norm", fr.Chi2() / ndf);
+	r.Set("prob", TMath::Prob(fr.Chi2(), ndf));
 
 	unsigned int idx;
 
