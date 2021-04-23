@@ -49,3 +49,5 @@ for (int fi : fit_types.keys)
 		AttachLegend(BuildLegend(NW), NE);
 	}
 }
+
+GShipout(vSkip=0mm);

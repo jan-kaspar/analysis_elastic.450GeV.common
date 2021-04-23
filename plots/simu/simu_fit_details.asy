@@ -3,7 +3,7 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-string fit_file = topDir + "data/simu/bla/exp1_con_rho0.10/errors_none/seed_1/fit_both.root";
+string fit_file = topDir + "data/simu/bla/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_both.root";
 
 string fit_iteration = "iteration 2";
 
@@ -71,4 +71,4 @@ DrawOne(0, 0, 0.005, 6cm);
 
 DrawOne(1, 0, 0.100, 10cm);
 
-GShipout(vSkip=0mm);
+GShipout(hSkip=1mm, vSkip=0mm);
