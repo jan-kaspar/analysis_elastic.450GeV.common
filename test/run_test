@@ -70,28 +70,6 @@ function Compilation()
 
 #----------------------------------------------------------------------------------------------------
 
-function MainAnalysis()
-{
-	./run_input_import -version "$input_version" || return 10
-
-	echo "<li>OK</li>" >> "$report"
-
-	return 0
-}
-
-#----------------------------------------------------------------------------------------------------
-
-function Simu()
-{
-	./run_simu_chain -fast -version "$simu_version" -models "$simu_model" || return 10
-
-	echo "<li>OK</li>" >> "$report"
-
-	return 0
-}
-
-#----------------------------------------------------------------------------------------------------
-
 function ResetComparisonResults()
 {
 	n_diff="0"
@@ -136,6 +114,64 @@ function MakeOneComparison()
 
 		failed_comparisons="${failed_comparisons}    <li>$file, $obj ($diff_msg)</li>\n"
 	fi
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function MainAnalysis()
+{
+	./run_input_import -version "$input_version" || return 10
+
+	./run_fits_data -output "$fit_version" || return 11
+
+	echo "<li>OK</li>" >> "$report"
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function MainAnalysisComparison()
+{
+	ResetComparisonResults
+
+	if [[ "$reference_directory" == *"none" ]]
+	then
+		echo "<li>not run - missing reference</li>" >> "$report"
+
+		return 1
+	else
+		MakeOneComparison "data/fits/$fit_version/fit_high.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_high.root" "final/results"
+
+		MakeOneComparison "data/fits/$fit_version/fit_both.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_both.root" "final/results"
+
+		if [ "$n_diff" -eq "0" ]
+		then
+			echo "<li>OK</li>" >> "$report"
+		else
+			echo "<li>$n_diff differences:</li>" >> "$report"
+			echo "<ul>" >> "$report"
+			echo -e "$failed_comparisons" >> "$report"
+			echo "</ul>" >> "$report"
+
+			return 2
+		fi
+	fi
+
+	return 0
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function Simu()
+{
+	./run_simu_chain -fast -version "$simu_version" -models "$simu_model" || return 10
+
+	echo "<li>OK</li>" >> "$report"
+
+	return 0
 }
 
 #----------------------------------------------------------------------------------------------------
@@ -196,6 +232,9 @@ function SimuComparison()
 
 # defaults
 input_version="version_TEST"
+
+fit_version="version_TEST"
+
 simu_version="version_TEST"
 simu_seed="1"
 simu_binning="sb1"
@@ -207,6 +246,7 @@ steps="
  StaticAnalysisCheck
  Compilation
  MainAnalysis
+ MainAnalysisComparison
  Simu
  SimuComparison
 "
