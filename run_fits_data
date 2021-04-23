@@ -1,5 +1,7 @@
 #!/bin/bash
 
+make -j8 || exit 1
+
 # defaults
 input="version_0"
 output="default"
