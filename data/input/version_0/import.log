@@ -1,0 +1,34 @@
+-------------------- low beta --------------------
+
+* recent commits: 
+7c5051b Tuned time parameters.
+1015364 Cuts retuned.
+55f6bd2 Switched to input version3.
+79add59 Added optical functions for beam 2.
+8b87d51 Initial import.
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+nothing to commit (use -u to show untracked files)
+
+-------------------- high beta --------------------
+
+* recent commits: 
+464c330 Prepared for input from express EOS, one dataset per fill.
+47491c3 Created branch for express reconstruction.
+124b880 Added background-indicating plots.
+92b86a9 Added LS-range subsamples.
+e0239be Import.
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+nothing to commit (use -u to show untracked files)
+
+-------------------- import --------------------
+* sb1
+* sb2
+* sb3
