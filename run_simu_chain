@@ -11,6 +11,8 @@ binnings="sb1,sb2,sb3"
 
 errors="none stat syst norm stat,syst,norm"
 
+fit_types="high both"
+
 # parse command line
 function PrintUsage()
 {
@@ -97,11 +99,10 @@ function RunOne()
 
 		if [ "$run_fits" == "1" ]
 		then
-			$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta" \
-				-output-root "fit_high.root" -output-results "fit_high.results" &> "fit_high.log" || exit 23
-
-			$BASE_DIR/.make_fit -input-file "histograms.root" -input-datasets "high_beta,low_beta" \
-				-output-root "fit_both.root" -output-results "fit_both.results" &> "fit_both.log" || exit 23
+			for tp in ${fit_types[*]}
+			do
+				$BASE_DIR/run_standard_fit -type "$tp" -input "histograms.root" -output "$tp" || exit 23
+			done
 		fi
 	
 		cd ..
