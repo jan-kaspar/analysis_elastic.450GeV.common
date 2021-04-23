@@ -40,7 +40,7 @@ void SampleModel(Model *m, const string &label)
 	TGraph *g_dsdt_H = new TGraph();
 	TGraph *g_dsdt_CH = new TGraph();
 
-	for (double mt = 0.9E-4; mt <= 0.11; )
+	for (double mt = 0.9E-4; mt <= 11.; )
 	{
 		coulomb->mode = CoulombInterference::mPH;
 		TComplex F_H = coulomb->Amp(-mt);
@@ -52,7 +52,7 @@ void SampleModel(Model *m, const string &label)
 		g_dsdt_H->SetPoint(idx, mt, cnts->sig_fac * F_H.Rho2());
 		g_dsdt_CH->SetPoint(idx, mt, cnts->sig_fac * F_CH.Rho2());
 
-		double dmt = 5E-3;
+		double dmt = 0.1;
 		if (mt < 0.10) dmt = 5E-4;
 		if (mt < 0.004) dmt = 1E-4;
 		if (mt < 0.001) dmt = 5E-6;
