@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# defaults
+fit_type=""
+input=""
+output=""
+
+# parse command line
+function PrintUsage()
+{
+	echo "PrintUsage $0 <option> <option>"
+	echo "OPTIONS:"
+	echo "    -type <string>        fit type"
+	echo "    -input <string>       input specification"
+	echo "    -output <string>      output specification"
+}
+
+while [ -n "$1" ]
+do
+	case $1 in
+		"-h" | "-help" | "--help")
+			PrintUsage
+			exit 0
+			;;
+		"-type")
+			shift
+			fit_type="$1"
+			;;
+		"-input")
+			shift
+			input="$1"
+			;;
+		"-output")
+			shift
+			output="$1"
+			;;
+		*)
+			echo "ERROR: parameter '$1' not understood."
+			PrintUsage
+			exit 1
+			;;
+	esac
+
+	shift
+done
+
+# validate input
+if [ -z "$fit_type" -o -z "$input" -o -z "$output" ]
+then
+	echo "ERROR: insufficient input"
+	PrintUsage
+	exit 1
+fi
+
+# run the fit
+if [ "$fit_type" == "high" ]
+then
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
+		-output-root "fit_$output.root" -output-results "fit_$output.results" &> "fit_$output.log" || exit 10
+	exit 0
+fi
+
+if [ "$fit_type" == "both" ]
+then
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta,low_beta" \
+		-output-root "fit_$output.root" -output-results "fit_$output.results" &> "fit_$output.log" || exit 10
+	exit 0
+fi
+
+# unknown fit type
+echo "ERROR: unknown fit type '$fit_type'"
+exit 2
