@@ -1,3 +1,67 @@
 #!/bin/bash
 
+# defaults
+input="version_0"
+output="default"
+fit_types="high both"
 
+# parse command line
+function PrintUsage()
+{
+	echo "PrintUsage $0 <option> <option>"
+	echo "OPTIONS:"
+	echo "    -input <string>       input version"
+	echo "    -output <string>      output version"
+	echo "    -types <string>       space separated list of fit type"
+}
+
+while [ -n "$1" ]
+do
+	case $1 in
+		"-h" | "-help" | "--help")
+			PrintUsage
+			exit 0
+			;;
+		"-input")
+			shift
+			input="$1"
+			;;
+		"-output")
+			shift
+			output="$1"
+			;;
+		"-types")
+			shift
+			fit_types="$1"
+			;;
+		*)
+			echo "ERROR: parameter '$1' not understood."
+			PrintUsage
+			exit 1
+			;;
+	esac
+
+	shift
+done
+
+# validate input
+if [ -z "$fit_types" -o -z "$input" -o -z "$output" ]
+then
+	echo "ERROR: insufficient input"
+	PrintUsage
+	exit 1
+fi
+
+# run fits
+dir="data/fits/${output}"
+mkdir -p "$dir"
+cd "$dir"
+
+echo "* $dir"
+
+for tp in ${fit_types[*]}
+do
+	echo "  - $tp"
+
+	$BASE_DIR/run_standard_fit -type "$tp" -input "$BASE_DIR/data/input/$input/import.root" -output "$tp"
+done
