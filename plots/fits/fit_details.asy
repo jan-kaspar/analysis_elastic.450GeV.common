@@ -35,6 +35,7 @@ struct Results
 	real eta, eta_unc;
 	real A, A_unc;
 	real b1, b1_unc;
+	real B, B_unc;
 	real p0, p0_unc;
 	real rho, rho_unc;
 	real si_tot, si_tot_unc;
@@ -67,6 +68,8 @@ Results LoadResults(RootObject h)
 
 		if (l == "b1") r.b1 = v;
 		if (l == "b1_unc") r.b1_unc = v;
+		if (l == "B") r.B = v;
+		if (l == "B_unc") r.B_unc = v;
 
 		if (l == "p0") r.p0 = v;
 		if (l == "p0_unc") r.p0_unc = v;
@@ -228,7 +231,7 @@ void DrawOneFit(string type)
 	l += format("\hbox{$\hbox{p-value} = %#.2f$}", r.prob);
 	l += format("\hbox{$\et = (%#.2f", r.eta) + format("\pm %#.2f)$}", r.eta_unc);
 	l += format("\hbox{$A = (%#.2f", r.A) + format("\pm %#.2f)\un{mb/GeV^2}$}", r.A_unc);
-	l += format("\hbox{$b_1 = (%#.2f", r.b1) + format("\pm %#.2f)\un{GeV^{-2}}$}", r.b1_unc);
+	l += format("\hbox{$B = (%#.2f", r.B) + format("\pm %#.2f)\un{GeV^{-2}}$}", r.B_unc);
 	l += format("\hbox{$\rh = (%#.2f", r.rho) + format("\pm %#.2f)$}", r.rho_unc);
 	l += format("\hbox{$\si_{\rm tot} = (%#.2f", r.si_tot) + format("\pm %#.2f)\un{mb}$}", r.si_tot_unc);
 	l += "}";

@@ -603,6 +603,8 @@ Result Minimization::GetResults() const
 	idx = 2;
 	r.Set("b1", fr.Parameter(idx));
 	r.Set("b1_unc", sqrt(fr.CovMatrix(idx, idx)));
+	r.Set("B", 2.*fr.Parameter(idx));
+	r.Set("B_unc", 2.*sqrt(fr.CovMatrix(idx, idx)));
 
 	idx = 2 + model.n_b;
 	const double p0 = fr.Parameter(idx);
