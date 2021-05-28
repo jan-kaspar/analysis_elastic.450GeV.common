@@ -701,7 +701,7 @@ void Minimization::WriteGraphs() const
 
 	gDirectory = d_top;
 
-	unique_ptr<TGraph> g_fit_C(new TGraph), g_fit_H(new TGraph), g_fit_CH(new TGraph);
+	unique_ptr<TGraph> g_fit_C(new TGraph), g_fit_H(new TGraph), g_fit_CH(new TGraph), g_fit_Z(new TGraph);
 
 	g_fit_C->SetName("g_fit_C");
 	g_fit_C->SetLineColor(4);
@@ -712,7 +712,9 @@ void Minimization::WriteGraphs() const
 	g_fit_CH->SetName("g_fit_CH");
 	g_fit_CH->SetLineColor(2);
 
-	for (double t = 1E-4; t <= 0.1; )
+	g_fit_Z->SetName("g_fit_Z");
+
+	for (double t = 0.5E-4; t <= 0.1; )
 	{
 		const double v_C = model.Eval(t, Model::cC);
 		const double v_H = model.Eval(t, Model::cH);
@@ -724,7 +726,11 @@ void Minimization::WriteGraphs() const
 		g_fit_H->SetPoint(idx, t, v_H);
 		g_fit_CH->SetPoint(idx, t, v_CH);
 
-		double dt = 0.5E-4;
+		g_fit_Z->SetPoint(idx, t, (v_CH - v_C - v_H) / v_CH);
+
+		double dt = 0.5E-5;
+		if (t > 0.0008)
+			dt = 0.5E-4;
 		if (t > 0.006)
 			dt = 0.002;
 		if (t > 0.1)
@@ -732,7 +738,10 @@ void Minimization::WriteGraphs() const
 		t += dt;
 	}
 
+	g_fit_C->Write();
+	g_fit_H->Write();
 	g_fit_CH->Write();
+	g_fit_Z->Write();
 
 	unique_ptr<TCanvas> c_fit_cmp(new TCanvas("c_fit_cmp"));
 	g_fit_CH->Draw("al");
