@@ -60,6 +60,15 @@ then
 	exit 0
 fi
 
+if [ "$fit_type" == "HighBeta-LowT" ]
+then
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
+		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-t-max-high-beta 0.015 \
+			&> "fit_$output.log" || exit 10
+	exit 0
+fi
+
 if [ "$fit_type" == "both" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta,low_beta" \
