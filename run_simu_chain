@@ -112,11 +112,11 @@ function RunOne()
 
 	if [ "$run_fits" == "1" ]
 	then
-		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_high.root"\
-			-seed-min 1 -seed-max $n_repetitions -output "process_fits_high.root" &> "process_fits_high.log" || exit 25
+		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_HighBeta.root"\
+			-seed-min 1 -seed-max $n_repetitions -output "process_fits_HighBeta.root" &> "process_fits_HighBeta.log" || exit 25
 
-		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_both.root"\
-			-seed-min 1 -seed-max $n_repetitions -output "process_fits_both.root" &> "process_fits_both.log" || exit 25
+		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_BothBetas.root"\
+			-seed-min 1 -seed-max $n_repetitions -output "process_fits_BothBetas.root" &> "process_fits_BothBetas.log" || exit 25
 	fi
 }
 

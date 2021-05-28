@@ -141,11 +141,11 @@ function MainAnalysisComparison()
 
 		return 1
 	else
-		MakeOneComparison "data/fits/$fit_version/fit_high.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/fits/$fit_version/fit_high.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta.root" "final/results"
 
-		MakeOneComparison "data/fits/$fit_version/fit_both.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/fits/$fit_version/fit_both.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_BothBetas.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_BothBetas.root" "final/results"
 
 		if [ "$n_diff" -eq "0" ]
 		then
@@ -198,18 +198,18 @@ function SimuComparison()
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_histograms.root" "$simu_binning/low_beta/h_stddev_rel"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_histograms.root" "$simu_binning/high_beta/h_stddev_rel"
 
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/g_psi_re"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/g_psi_im"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/low_beta/g_data_dsdt_unc_comb"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/high_beta/g_data_dsdt_unc_comb"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_both.root" "final/results"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/g_psi_re"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/g_psi_im"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/low_beta/g_data_dsdt_unc_comb"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/high_beta/g_data_dsdt_unc_comb"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_BothBetas.root" "final/results"
 
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_both.root" "eta/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_both.root" "A/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_both.root" "rho/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_both.root" "si_tot/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_BothBetas.root" "eta/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_BothBetas.root" "A/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_BothBetas.root" "rho/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_BothBetas.root" "si_tot/h_diff"
 
 		if [ "$n_diff" -eq "0" ]
 		then

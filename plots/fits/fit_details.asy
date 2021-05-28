@@ -6,8 +6,9 @@ include "../common.asy";
 string version = "default";
 
 string types[] = {
-	"both",
-	"high",
+	"BothBetas",
+	"HighBeta",
+	"HighBeta-LowT",
 };
 
 string fit_iteration = "iteration 2";
