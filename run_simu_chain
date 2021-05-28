@@ -11,7 +11,7 @@ binnings="sb1,sb2,sb3"
 
 errors="none stat syst norm stat,syst,norm"
 
-fit_types="high both"
+fit_types="HighBeta BothBetas"
 
 # parse command line
 function PrintUsage()
