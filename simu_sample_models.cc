@@ -69,6 +69,7 @@ void SampleModel(Model *m, const string &label)
 
 	const double A = cnts->sig_fac * F_H_0.Rho2();
 	const double b1 = (log(F_H_0.Rho2()) - log(F_H_ep.Rho2())) / ep / 2.;
+	const double B = 2. * b1;
 	const double rho = F_H_0.Re() / F_H_0.Im();
 	const double p0 = M_PI/2. - atan(rho);
 	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
@@ -77,6 +78,7 @@ void SampleModel(Model *m, const string &label)
 	r.Set("eta", 1.);
 	r.Set("A", A);
 	r.Set("b1", b1);
+	r.Set("B", B);
 	r.Set("rho", rho);
 	r.Set("p0", p0);
 	r.Set("si_tot", si_tot);

@@ -92,6 +92,8 @@ int main(int argc, const char **argv)
 		{"A_unc", 15},
 		{"b1", 4},
 		{"b1_unc", 4},
+		{"B", 8},
+		{"B_unc", 8},
 		{"p0", 0.1},
 		{"p0_unc", 0.1},
 		{"rho", 0.1},
