@@ -11,7 +11,6 @@
 *.results
 .*
 
-data
 plots.local
 
 compile_commands.json
