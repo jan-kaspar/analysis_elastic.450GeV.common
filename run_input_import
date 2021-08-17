@@ -65,7 +65,7 @@ mkdir -p "$topDir"
 
 	echo ""
 	echo "* recent commits: "
-	git log --oneline | tail -n 5
+	git log --oneline | head -n 5
 
 	echo ""
 	echo "* status: "
@@ -78,7 +78,7 @@ mkdir -p "$topDir"
 
 	echo ""
 	echo "* recent commits: "
-	git log --oneline | tail -n 5
+	git log --oneline | head -n 5
 
 	echo ""
 	echo "* status: "
