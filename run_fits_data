@@ -3,7 +3,7 @@
 make -j8 || exit 1
 
 # defaults
-input="version_0"
+input="version_2"
 output="default"
 fit_types="HighBeta HighBeta-LowT BothBetas"
 

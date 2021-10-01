@@ -5,9 +5,10 @@ version=""
 n_repetitions="10"
 models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
 
-input_version="version_0"
+input_version="version_2"
 
-binnings="sb1,sb2,sb3"
+binnings="sb1"
+#binnings="sb1,sb2,sb3"
 
 errors="none stat syst norm stat,syst,norm"
 
