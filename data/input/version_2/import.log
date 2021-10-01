@@ -1,0 +1,34 @@
+-------------------- low beta --------------------
+
+* recent commits: 
+5e4ebb2 set vtx_y to 0
+d01de0d add optics uncertainties
+c2f01cd add optics uncertainties
+15b8aac add optics uncertainties
+c294c2f new program to evaluate the optics perturbations
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+nothing to commit (use -u to show untracked files)
+
+-------------------- high beta --------------------
+
+* recent commits: 
+3958a38 remove left-over code
+6f24f66 add clean target
+6a345cc update
+2cbeb93 use fit-2 for unfolding
+6cdeeb9 use fit-2 by default
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+nothing to commit (use -u to show untracked files)
+
+-------------------- import --------------------
+* sb1
+* sb2
+* sb3
