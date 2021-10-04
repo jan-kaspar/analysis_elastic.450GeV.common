@@ -53,7 +53,7 @@ then
 fi
 
 # run the fit
-if [ "$fit_type" == "HighBeta" ]
+if [ "$fit_type" == "HighBeta-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
 		-output-root "fit_$output.root" -output-results "fit_$output.results" \
@@ -62,7 +62,7 @@ then
 	exit 0
 fi
 
-if [ "$fit_type" == "HighBeta-LowT" ]
+if [ "$fit_type" == "HighBeta-single-0.015" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
 		-output-root "fit_$output.root" -output-results "fit_$output.results" \
@@ -71,7 +71,47 @@ then
 	exit 0
 fi
 
-if [ "$fit_type" == "BothBetas" ]
+if [ "$fit_type" == "HighBeta-sequence-0.005-0.020" ]
+then
+	tag="fit_${output}_step_a"
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+		-init-eta 1. -use-eta-fixed 1\
+		-init-rho 0.010 -use-rho-fixed 1\
+		-t-min-high-beta 0.005 -t-max-high-beta 0.020 \
+			&> "$tag.log" || exit 10
+
+	Ap=`cat $tag.log|grep "Ap-->"`
+	Ap=${Ap#*-->}
+
+	b1=`cat $tag.log|grep "b1-->"`
+	b1=${b1#*-->}
+
+	tag="fit_${output}_step_b"
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+		-init-eta 1. -use-eta-from-Ap 1 -init-Ap "$Ap"\
+		-init-rho 0.010 -use-rho-fixed 1\
+		-init-b1 "$b1" -use-b1-fixed 1\
+		-t-max-high-beta 0.0005 \
+			&> "$tag.log" || exit 11
+
+	eta=`cat $tag.log|grep "eta-->"`
+	eta=${eta#*-->}
+
+	A=`cat $tag.log|grep "A-->"`
+	A=${A#*-->}
+
+	tag="fit_${output}_step_c"
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+		-init-eta "$eta" -use-eta-fixed 1\
+		-init-A "$A" -use-A-fixed 1\
+		-init-b1 "$b1" -use-b1-fixed 1\
+		-t-max-high-beta 0.005 \
+			&> "$tag.log" || exit 11
+
+	exit 0
+fi
+
+if [ "$fit_type" == "BothBetas-single" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta,low_beta" \
 		-output-root "fit_$output.root" -output-results "fit_$output.results" &> "fit_$output.log" || exit 10

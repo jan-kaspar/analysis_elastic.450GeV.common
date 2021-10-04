@@ -5,7 +5,8 @@ make -j8 || exit 1
 # defaults
 input="version_2"
 output="iv2_v1"
-fit_types="HighBeta BothBetas"
+fit_types="HighBeta-single-0.015 HighBeta-single-0.020 HighBeta-sequence-0.005-0.020 BothBetas-single"
+#fit_types="HighBeta-sequence-0.005-0.020"
 
 # parse command line
 function PrintUsage()
