@@ -26,6 +26,14 @@ void Result::Set(const string &name, double value)
 
 //----------------------------------------------------------------------------------------------------
 
+void Result::Print() const
+{
+	for (const auto &entry : data)
+		printf("%s-->%.5E\n", entry.first.c_str(), entry.second);
+}
+
+//----------------------------------------------------------------------------------------------------
+
 void Result::Load(const std::string &file)
 {
 	ifstream f_in(file);

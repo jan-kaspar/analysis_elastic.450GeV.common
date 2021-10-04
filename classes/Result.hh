@@ -19,6 +19,8 @@ struct Result
 	double Get(const std::string &name, double default_value = -1) const;
 	void Set(const std::string &name, double value);
 
+	void Print() const;
+
 	void Load(const std::string &file);
 	void Write(const std::string &file) const;
 
