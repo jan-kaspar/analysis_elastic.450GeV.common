@@ -438,9 +438,9 @@ void Metric::SetModelParameters(const double *par)
 {
 	// order of parameters:
 	//    eta
-	//    a
+	//    A
 	//    b_1, b_2, ...
-	//    p0, ...
+	//    rho, ...
 
 	const double A = par[1];
 
@@ -459,7 +459,7 @@ void Metric::SetModelParameters(const double *par)
 		if (bi == 3) model.hfm->b4 = par[2 + bi];
 	}
 
-	model.hfm->p0 = par[2 + model.n_b];
+	model.hfm->p0 = M_PI/2 - atan(par[2 + model.n_b]);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -598,9 +598,8 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	}
 
 	{
-		const double p0 = M_PI/2. - atan(is.rho);
 		auto &cp = fitter.Config().ParSettings(model.n_b + 2);
-		cp.Set("p0", p0, 0.01);
+		cp.Set("rho", is.rho, 0.01);
 		if (is.rho_fixed)
 			cp.Fix();
 	}
@@ -655,27 +654,16 @@ Result Minimization::GetResults() const
 	r.Set("B_unc", 2.*sqrt(fr.CovMatrix(idx, idx)));
 
 	idx = 2 + model.n_b;
-	const double p0 = fr.Parameter(idx);
-	const double p0_unc = sqrt(fr.CovMatrix(idx, idx));
-	r.Set("p0", p0);
-	r.Set("p0_unc", p0_unc);
-
-	const double rho = cos(p0) / sin(p0);
-	const double rho_unc = fabs(1. / sin(p0) / sin(p0)) * p0_unc;
-
+	const double rho = fr.Parameter(idx);
+	const double rho_unc = sqrt(fr.CovMatrix(idx, idx));
 	r.Set("rho", rho);
 	r.Set("rho_unc", rho_unc);
 
 	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
 
 	const double V_A_A = fr.CovMatrix(1, 1);
-	const double V_A_p0 = fr.CovMatrix(1, idx);
-	const double V_p0_p0 =  fr.CovMatrix(idx, idx);
-
-	const double sc_rho = 1. / sin(p0) / sin(p0);
-
-	const double V_A_rho = V_A_p0 * sc_rho;
-	const double V_rho_rho = sc_rho * V_p0_p0 * sc_rho;
+	const double V_A_rho = fr.CovMatrix(1, idx);
+	const double V_rho_rho =  fr.CovMatrix(idx, idx);
 
 	const double der_A = si_tot/2. * 1./A;
 	const double der_rho = si_tot/2. * 2.*rho / (1. + rho*rho);
