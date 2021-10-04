@@ -417,7 +417,13 @@ struct Metric
 	Data &data;
 	Model &model;
 
+	bool use_eta_from_Ap;
+	double Ap;
+
 	Metric(Data &d, Model &m) : data(d), model(m) {}
+
+	double EtaFromAp(double A) { return Ap / A; }
+	double EtaFromApUnc(double A, double A_unc) { return Ap * A_unc / A / A; }
 
 	void SetModelParameters(const double *par);
 
@@ -436,10 +442,14 @@ void Metric::SetModelParameters(const double *par)
 	//    b_1, b_2, ...
 	//    p0, ...
 
-	for (auto &ds : data.datasets)
-		ds.eta = par[0];
+	const double A = par[1];
 
-	model.hfm->a = par[1] * 1E6;
+	const double eta_eff = (use_eta_from_Ap) ? EtaFromAp(A) : par[0];
+
+	for (auto &ds : data.datasets)
+		ds.eta = eta_eff;
+
+	model.hfm->a = sqrt(A / Elegent::cnts->sig_fac);
 
 	for (unsigned int bi = 0; bi < model.n_b; ++bi)
 	{
@@ -502,10 +512,13 @@ double Metric::operator() (const double *par)
 struct InitialSettings
 {
 	bool eta_fixed;
+	bool eta_from_Ap;
 	double eta;
 
+	double Ap; // Ap = A * eta
+
 	bool A_fixed;
-	double A;
+	double A; // A = sig_fac * a^2
 
 	bool b1_fixed;
 	double b1;
@@ -552,15 +565,16 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	{
 		auto &cp = fitter.Config().ParSettings(0);
 		cp.Set("eta", is.eta, 0.05, 0.70, 1.30);
-		if (is.eta_fixed)
+		if (is.eta_fixed || is.eta_from_Ap)
 			cp.Fix();
 	}
-	// FIXME: handle fixed variables
+
+	metric.use_eta_from_Ap = is.eta_from_Ap;
+	metric.Ap = is.eta_from_Ap;
 
 	{
-		const double a = sqrt(is.A / Elegent::cnts->sig_fac);
 		auto &cp = fitter.Config().ParSettings(1);
-		cp.Set("a", a / 1E6, a / 1E6 / 10);
+		cp.Set("A", is.A, is.A / 10);
 		if (is.A_fixed)
 			cp.Fix();
 	}
@@ -618,16 +632,21 @@ Result Minimization::GetResults() const
 
 	unsigned int idx;
 
-	idx = 0;
-	r.Set("eta", fr.Parameter(idx));
-	r.Set("eta_unc", sqrt(fr.CovMatrix(idx, idx)));
-
 	idx = 1;
-	const double a = fr.Parameter(idx) * 1E6;
-	const double a_unc = sqrt(fr.CovMatrix(idx, idx)) * 1E6;
-	const double A = cnts->sig_fac * a*a;
+	const double A = fr.Parameter(idx);
+	const double A_unc = sqrt(fr.CovMatrix(idx, idx));
 	r.Set("A", A);
-	r.Set("A_unc", cnts->sig_fac * 2*a * a_unc);
+	r.Set("A_unc", A_unc);
+
+	idx = 0;
+	if (metric.use_eta_from_Ap)
+	{
+		r.Set("eta", metric.EtaFromAp(A));
+		r.Set("eta_unc", metric.EtaFromApUnc(A, A_unc));
+	} else {
+		r.Set("eta", fr.Parameter(idx));
+		r.Set("eta_unc", sqrt(fr.CovMatrix(idx, idx)));
+	}
 
 	idx = 2;
 	r.Set("b1", fr.Parameter(idx));
@@ -649,15 +668,13 @@ Result Minimization::GetResults() const
 
 	const double si_tot = sqrt( 16.*cnts->pi * cnts->sq_hbarc / (1. + rho * rho) * A );
 
-	const double V_a_a = fr.CovMatrix(1, 1);
-	const double V_a_p0 = fr.CovMatrix(1, idx);
+	const double V_A_A = fr.CovMatrix(1, 1);
+	const double V_A_p0 = fr.CovMatrix(1, idx);
 	const double V_p0_p0 =  fr.CovMatrix(idx, idx);
 
-	const double sc_A = 2. * cnts->sig_fac * fr.Parameter(1) * 1E6 * 1E6;
 	const double sc_rho = 1. / sin(p0) / sin(p0);
 
-	const double V_A_A = sc_A * V_a_a * sc_A;
-	const double V_A_rho = sc_A * V_a_p0 * sc_rho;
+	const double V_A_rho = V_A_p0 * sc_rho;
 	const double V_rho_rho = sc_rho * V_p0_p0 * sc_rho;
 
 	const double der_A = si_tot/2. * 1./A;
@@ -804,7 +821,10 @@ void PrintUsage()
 	printf("    -n-b <int>                  number of b parameters\n");
 
 	printf("    -use-eta-fixed <bool>       if eta shall be fixed in minimisation\n");
+	printf("    -use-eta-from-Ap <bool>     if eta shall be derived from Ap\n");
 	printf("    -init-eta <double>          initial value of eta\n");
+
+	printf("    -init-Ap <double>           initial value of Ap = eta * A\n");
 
 	printf("    -use-A-fixed <bool>         if A shall be fixed in minimisation\n");
 	printf("    -init-A <double>            initial value of A\n");
@@ -844,6 +864,8 @@ int main(int argc, const char **argv)
 
 	InitialSettings is;
 	is.eta_fixed = false;
+	is.eta_from_Ap = false;
+	is.Ap = 239.8;
 	is.eta = 1;
 	is.A_fixed = false;
 	is.A = 239.8;
@@ -881,7 +903,10 @@ int main(int argc, const char **argv)
 		if (TestUIntParameter(argc, argv, argi, "-n-b", n_b)) continue;
 
 		if (TestBoolParameter(argc, argv, argi, "-use-eta-fixed", is.eta_fixed)) continue;
+		if (TestBoolParameter(argc, argv, argi, "-use-eta-from-Ap", is.eta_from_Ap)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-eta", is.eta)) continue;
+
+		if (TestDoubleParameter(argc, argv, argi, "-init-Ap", is.Ap)) continue;
 
 		if (TestBoolParameter(argc, argv, argi, "-use-A-fixed", is.A_fixed)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-A", is.A)) continue;
