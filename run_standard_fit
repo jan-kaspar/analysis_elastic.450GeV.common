@@ -56,7 +56,9 @@ fi
 if [ "$fit_type" == "HighBeta" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
-		-output-root "fit_$output.root" -output-results "fit_$output.results" &> "fit_$output.log" || exit 10
+		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-t-max-high-beta 0.020 \
+			&> "fit_$output.log" || exit 10
 	exit 0
 fi
 

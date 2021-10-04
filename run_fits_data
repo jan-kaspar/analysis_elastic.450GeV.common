@@ -4,8 +4,8 @@ make -j8 || exit 1
 
 # defaults
 input="version_2"
-output="default"
-fit_types="HighBeta HighBeta-LowT BothBetas"
+output="iv2_v1"
+fit_types="HighBeta BothBetas"
 
 # parse command line
 function PrintUsage()
