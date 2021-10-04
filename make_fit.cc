@@ -501,9 +501,16 @@ double Metric::operator() (const double *par)
 
 struct InitialSettings
 {
+	bool eta_fixed;
 	double eta;
+
+	bool A_fixed;
 	double A;
+
+	bool b1_fixed;
 	double b1;
+
+	bool rho_fixed;
 	double rho;
 };
 
@@ -542,10 +549,21 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	fitter.SetFCN(model.n_fit_parameters, metric, pStart, 0, true);
 
 	// initialize parameters
-	fitter.Config().ParSettings(0).Set("eta", is.eta, 0.05, 0.70, 1.30);
+	{
+		auto &cp = fitter.Config().ParSettings(0);
+		cp.Set("eta", is.eta, 0.05, 0.70, 1.30);
+		if (is.eta_fixed)
+			cp.Fix();
+	}
+	// FIXME: handle fixed variables
 
-	const double a = sqrt(is.A / Elegent::cnts->sig_fac);
-	fitter.Config().ParSettings(1).Set("a", a / 1E6, a / 1E6 / 10);
+	{
+		const double a = sqrt(is.A / Elegent::cnts->sig_fac);
+		auto &cp = fitter.Config().ParSettings(1);
+		cp.Set("a", a / 1E6, a / 1E6 / 10);
+		if (is.A_fixed)
+			cp.Fix();
+	}
 
 	for (unsigned int i = 0; i < model.n_b; ++i)
 	{
@@ -558,11 +576,20 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 		if (u <= 0.)
 			u = 1.;
 
-		fitter.Config().ParSettings(2 + i).Set(buf, v, u);
+		auto &cp = fitter.Config().ParSettings(2 + i);
+		cp.Set(buf, v, u);
+
+		if (i == 0 && is.b1_fixed)
+			cp.Fix();
 	}
 
-	const double p0 = M_PI/2. - atan(is.rho);
-	fitter.Config().ParSettings(model.n_b + 2).Set("p0", p0, 0.01);
+	{
+		const double p0 = M_PI/2. - atan(is.rho);
+		auto &cp = fitter.Config().ParSettings(model.n_b + 2);
+		cp.Set("p0", p0, 0.01);
+		if (is.rho_fixed)
+			cp.Fix();
+	}
 
 	// set parameters to model
 	double par[model.n_fit_parameters];
@@ -776,9 +803,16 @@ void PrintUsage()
 
 	printf("    -n-b <int>                  number of b parameters\n");
 
+	printf("    -use-eta-fixed <bool>       if eta shall be fixed in minimisation\n");
 	printf("    -init-eta <double>          initial value of eta\n");
+
+	printf("    -use-A-fixed <bool>         if A shall be fixed in minimisation\n");
 	printf("    -init-A <double>            initial value of A\n");
+
+	printf("    -use-b1-fixed <bool>        if b1 shall be fixed in minimisation\n");
 	printf("    -init-b1 <double>           initial value of b1\n");
+
+	printf("    -use-rho-fixed <bool>       if rho shall be fixed in minimisation\n");
 	printf("    -init-rho <double>          initial value of rho\n");
 
 	printf("    -n-iterations <integer>             number of fit iterations\n");
@@ -809,9 +843,13 @@ int main(int argc, const char **argv)
 	bool use_safe_first_iteration = false;
 
 	InitialSettings is;
+	is.eta_fixed = false;
 	is.eta = 1;
+	is.A_fixed = false;
 	is.A = 239.8;
+	is.b1_fixed = false;
 	is.b1 = 8.5;
+	is.rho_fixed = false;
 	is.rho = 0.10;
 
 	unsigned int n_iterations = 3;
@@ -842,9 +880,16 @@ int main(int argc, const char **argv)
 
 		if (TestUIntParameter(argc, argv, argi, "-n-b", n_b)) continue;
 
+		if (TestBoolParameter(argc, argv, argi, "-use-eta-fixed", is.eta_fixed)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-eta", is.eta)) continue;
+
+		if (TestBoolParameter(argc, argv, argi, "-use-A-fixed", is.A_fixed)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-A", is.A)) continue;
+
+		if (TestBoolParameter(argc, argv, argi, "-use-b1-fixed", is.b1_fixed)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-b1", is.b1)) continue;
+
+		if (TestBoolParameter(argc, argv, argi, "-use-rho-fixed", is.rho_fixed)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-rho", is.rho)) continue;
 
 		if (TestUIntParameter(argc, argv, argi, "-n-iterations", n_iterations)) continue;
@@ -879,9 +924,13 @@ int main(int argc, const char **argv)
 
 	printf("    n_b=%u\n", n_b);
 
+	printf("    is.eta_fixed=%i\n", is.eta_fixed);
 	printf("    is.eta=%.2f\n", is.eta);
+	printf("    is.A_fixed=%i\n", is.A_fixed);
 	printf("    is.A=%.2f\n", is.A);
+	printf("    is.b1_fixed=%i\n", is.b1_fixed);
 	printf("    is.b1=%.2f\n", is.b1);
+	printf("    is.rho_fixed=%i\n", is.rho_fixed);
 	printf("    is.rho=%.3f\n", is.rho);
 
 	printf("    n_iterations=%u\n", n_iterations);
