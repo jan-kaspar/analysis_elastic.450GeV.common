@@ -35,7 +35,7 @@ struct Model
 {
 	unsigned int n_b;
 
-	unsigned int n_fit_parameters;
+	unsigned int n_fit_parameters, n_free_fit_parameters;
 
 	unique_ptr<HadronicFitModel> hfm;
 
@@ -45,7 +45,7 @@ struct Model
 
 	enum Component { cC, cH, cCH };
 
-	Model(unsigned int _n_b);
+	Model(unsigned int _n_b, unsigned _n_fixed_fit_parameters);
 
 	void ResetCaches();
 	void UpdateCaches();
@@ -56,9 +56,10 @@ struct Model
 
 //----------------------------------------------------------------------------------------------------
 
-Model::Model(unsigned int _n_b) :
+Model::Model(unsigned int _n_b, unsigned int _n_fixed_fit_parameters) :
 	n_b(_n_b),
 	n_fit_parameters(n_b + 3),
+	n_free_fit_parameters(n_fit_parameters - _n_fixed_fit_parameters),
 	hfm(new HadronicFitModel()),
 	caches_initialized(false)
 {
@@ -548,6 +549,8 @@ struct Minimization
 
 	void ResultToModel();
 
+	unsigned int GetNDF() const;
+
 	void WriteGraphs() const;
 
 	Result GetResults() const;
@@ -570,7 +573,7 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	}
 
 	metric.use_eta_from_Ap = is.eta_from_Ap;
-	metric.Ap = is.eta_from_Ap;
+	metric.Ap = is.Ap;
 
 	{
 		auto &cp = fitter.Config().ParSettings(1);
@@ -622,7 +625,10 @@ Result Minimization::GetResults() const
 	
 	const ROOT::Fit::FitResult &fr = fitter.Result();
 
-	unsigned int ndf = data.NPoints() - model.n_fit_parameters;
+	// TODO: uncomment, add to plots
+	//r.Set("n_b", model.n_b);
+
+	const unsigned int ndf = GetNDF();
 
 	r.Set("chi2", fr.Chi2());
 	r.Set("ndf", ndf);
@@ -638,14 +644,13 @@ Result Minimization::GetResults() const
 	r.Set("A_unc", A_unc);
 
 	idx = 0;
-	if (metric.use_eta_from_Ap)
-	{
-		r.Set("eta", metric.EtaFromAp(A));
-		r.Set("eta_unc", metric.EtaFromApUnc(A, A_unc));
-	} else {
-		r.Set("eta", fr.Parameter(idx));
-		r.Set("eta_unc", sqrt(fr.CovMatrix(idx, idx)));
-	}
+	const double eta = (metric.use_eta_from_Ap) ? metric.EtaFromAp(A) : fr.Parameter(idx);
+	const double eta_unc = (metric.use_eta_from_Ap) ? metric.EtaFromApUnc(A, A_unc) : sqrt(fr.CovMatrix(idx, idx));
+
+	r.Set("eta", eta);
+	r.Set("eta_unc", eta_unc);
+
+	r.Set("Ap", A * eta);
 
 	idx = 2;
 	r.Set("b1", fr.Parameter(idx));
@@ -692,8 +697,12 @@ void Minimization::PrintState() const
 	for (unsigned int i = 0; i < fitter.Config().NPar(); ++i)
 	{
 		const auto &pd = fitter.Config().ParSettings(i);
-		printf("idx %i [%3s]: val=%.3f, step=%.3f, min=%.3f, max=%.3f\n", i, pd.Name().c_str(),
-			pd.Value(), pd.StepSize(), pd.LowerLimit(), pd.UpperLimit());
+
+		if (pd.IsFixed())
+			printf("idx %i [%3s]: val=%.3f (FIXED)\n", i, pd.Name().c_str(), pd.Value());
+		else
+			printf("idx %i [%3s]: val=%.3f, step=%.3f, min=%.3f, max=%.3f\n", i, pd.Name().c_str(),
+				pd.Value(), pd.StepSize(), pd.LowerLimit(), pd.UpperLimit());
 	}
 }
 
@@ -703,9 +712,9 @@ void Minimization::PrintResults() const
 {
 	const ROOT::Fit::FitResult &result = fitter.Result();
 
-	unsigned int ndf = data.NPoints() - model.n_fit_parameters;
+	const unsigned int ndf = GetNDF();
 
-	printf("chi^2 = %.3f, ndf = %u, chi^2/ndf = %.3f\n", result.Chi2(), ndf, result.Chi2() / ndf);
+	printf("chi^2 = %.3f, points = %u, ndf = %u, chi^2/ndf = %.3f\n", result.Chi2(), data.NPoints(), ndf, result.Chi2() / ndf);
 
 	for (unsigned int i = 0; i < result.NPar(); ++i)
 		printf("idx %u [%3s]: %+.3E +- %.3E\n", i, result.ParName(i).c_str(), result.Parameter(i), sqrt(result.CovMatrix(i, i)));
@@ -721,6 +730,13 @@ void Minimization::ResultToModel()
 		par[i] = result.Parameter(i);
 
 	metric.SetModelParameters(par);
+}
+
+//----------------------------------------------------------------------------------------------------
+
+unsigned int Minimization::GetNDF() const
+{
+	return data.NPoints() - model.n_free_fit_parameters;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -939,6 +955,8 @@ int main(int argc, const char **argv)
 
 	printf("    is.eta_fixed=%i\n", is.eta_fixed);
 	printf("    is.eta=%.2f\n", is.eta);
+	printf("    is.eta_from_Ap=%i\n", is.eta_from_Ap);
+	printf("    is.Ap=%.2f\n", is.Ap);
 	printf("    is.A_fixed=%i\n", is.A_fixed);
 	printf("    is.A=%.2f\n", is.A);
 	printf("    is.b1_fixed=%i\n", is.b1_fixed);
@@ -986,7 +1004,13 @@ int main(int argc, const char **argv)
 		printf("    %s, n_bins = %lu\n", ds.tag.c_str(), ds.bins.size());
 
 	// initializations
-	Model model(n_b);
+	unsigned int n_fixed_fit_parameters = 0;
+	if (is.eta_fixed || is.eta_from_Ap) n_fixed_fit_parameters++;
+	if (is.A_fixed) n_fixed_fit_parameters++;
+	if (is.b1_fixed) n_fixed_fit_parameters++;
+	if (is.rho_fixed) n_fixed_fit_parameters++;
+
+	Model model(n_b, n_fixed_fit_parameters);
 
 	Metric metric(data, model);
 
@@ -1039,6 +1063,7 @@ int main(int argc, const char **argv)
 	
 	// save results
 	const auto &results = minimization.GetResults();
+	results.Print();
 
 	if (save_root)
 	{
