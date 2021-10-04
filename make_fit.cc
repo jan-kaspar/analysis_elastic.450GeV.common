@@ -502,9 +502,9 @@ double Metric::operator() (const double *par)
 struct InitialSettings
 {
 	double eta;
-	double a;
+	double A;
 	double b1;
-	double p0;
+	double rho;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -544,7 +544,8 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	// initialize parameters
 	fitter.Config().ParSettings(0).Set("eta", is.eta, 0.05, 0.70, 1.30);
 
-	fitter.Config().ParSettings(1).Set("a", is.a / 1E6, is.a / 1E6 / 10);
+	const double a = sqrt(is.A / Elegent::cnts->sig_fac);
+	fitter.Config().ParSettings(1).Set("a", a / 1E6, a / 1E6 / 10);
 
 	for (unsigned int i = 0; i < model.n_b; ++i)
 	{
@@ -560,7 +561,8 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 		fitter.Config().ParSettings(2 + i).Set(buf, v, u);
 	}
 
-	fitter.Config().ParSettings(model.n_b + 2).Set("p0", is.p0, 0.01);
+	const double p0 = M_PI/2. - atan(is.rho);
+	fitter.Config().ParSettings(model.n_b + 2).Set("p0", p0, 0.01);
 
 	// set parameters to model
 	double par[model.n_fit_parameters];
@@ -775,9 +777,9 @@ void PrintUsage()
 	printf("    -n-b <int>                  number of b parameters\n");
 
 	printf("    -init-eta <double>          initial value of eta\n");
-	printf("    -init-a <double>            initial value of a\n");
+	printf("    -init-A <double>            initial value of A\n");
 	printf("    -init-b1 <double>           initial value of b1\n");
-	printf("    -init-p0 <double>           initial value of p0\n");
+	printf("    -init-rho <double>          initial value of rho\n");
 
 	printf("    -n-iterations <integer>             number of fit iterations\n");
 	printf("    -use-safe-first-iteration <bool>    don't use init model for adjustments\n");
@@ -808,9 +810,9 @@ int main(int argc, const char **argv)
 
 	InitialSettings is;
 	is.eta = 1;
-	is.a = 5.67E6;
+	is.A = 239.8;
 	is.b1 = 8.5;
-	is.p0 = M_PI/2. - atan(0.10);
+	is.rho = 0.10;
 
 	unsigned int n_iterations = 3;
 
@@ -841,9 +843,9 @@ int main(int argc, const char **argv)
 		if (TestUIntParameter(argc, argv, argi, "-n-b", n_b)) continue;
 
 		if (TestDoubleParameter(argc, argv, argi, "-init-eta", is.eta)) continue;
-		if (TestDoubleParameter(argc, argv, argi, "-init-a", is.a)) continue;
+		if (TestDoubleParameter(argc, argv, argi, "-init-A", is.A)) continue;
 		if (TestDoubleParameter(argc, argv, argi, "-init-b1", is.b1)) continue;
-		if (TestDoubleParameter(argc, argv, argi, "-init-p0", is.p0)) continue;
+		if (TestDoubleParameter(argc, argv, argi, "-init-rho", is.rho)) continue;
 
 		if (TestUIntParameter(argc, argv, argi, "-n-iterations", n_iterations)) continue;
 		if (TestBoolParameter(argc, argv, argi, "-use-safe-first-iteration", use_safe_first_iteration)) continue;
@@ -878,9 +880,9 @@ int main(int argc, const char **argv)
 	printf("    n_b=%u\n", n_b);
 
 	printf("    is.eta=%.2f\n", is.eta);
-	printf("    is.a=%.2E\n", is.a);
+	printf("    is.A=%.2f\n", is.A);
 	printf("    is.b1=%.2f\n", is.b1);
-	printf("    is.p0=%.3f\n", is.p0);
+	printf("    is.rho=%.3f\n", is.rho);
 
 	printf("    n_iterations=%u\n", n_iterations);
 	printf("    use_safe_first_iteration=%u\n", use_safe_first_iteration);
