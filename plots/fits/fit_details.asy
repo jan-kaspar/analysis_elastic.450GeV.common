@@ -3,12 +3,17 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-string version = "default";
+string version = "iv2_v1";
 
 string types[] = {
-	"BothBetas",
-	"HighBeta",
-	"HighBeta-LowT",
+	//"HighBeta",
+	//"HighBeta-LowT",
+
+	"HighBeta-sequence-0.005-0.020_step_a",
+	"HighBeta-sequence-0.005-0.020_step_b",
+	"HighBeta-sequence-0.005-0.020_step_c"
+
+	//"BothBetas",
 };
 
 string fit_iteration = "iteration 2";
@@ -28,6 +33,8 @@ mark mSY = mSq+false;
 
 struct Results
 {
+	real n_b;
+
 	real chi2, chi2_norm;
 	real ndf;
 	real prob;
@@ -36,7 +43,7 @@ struct Results
 	real A, A_unc;
 	real b1, b1_unc;
 	real B, B_unc;
-	real p0, p0_unc;
+	//real p0, p0_unc;
 	real rho, rho_unc;
 	real si_tot, si_tot_unc;
 };
@@ -55,6 +62,8 @@ Results LoadResults(RootObject h)
 		
 		real v = h.rExec("GetBinContent", bi);
 
+		if (l == "n_b") r.n_b = v;
+
 		if (l == "chi2") r.chi2 = v;
 		if (l == "ndf") r.ndf = v;
 		if (l == "chi2_norm") r.chi2_norm = v;
@@ -71,8 +80,8 @@ Results LoadResults(RootObject h)
 		if (l == "B") r.B = v;
 		if (l == "B_unc") r.B_unc = v;
 
-		if (l == "p0") r.p0 = v;
-		if (l == "p0_unc") r.p0_unc = v;
+		//if (l == "p0") r.p0 = v;
+		//if (l == "p0_unc") r.p0_unc = v;
 
 		if (l == "rho") r.rho = v;
 		if (l == "rho_unc") r.rho_unc = v;
@@ -226,7 +235,8 @@ void DrawOneFit(string type)
 	NewRow();
 
 	NewPad(false);
-	string l = "\vbox{\hbox{\bf version: " + version + "}\hbox{\bf type: " + type +  "}\hbox{iteration: " + fit_iteration + "}";
+	string l = "\vbox{\hbox{\bf version: " + replace(version, "_", "-") + "}\hbox{\bf type: " + replace(type, "_", "-") +  "}\hbox{iteration: " + fit_iteration + "}";
+	l += format("\hbox{$N_b = %.0f$}", r.n_b);
 	l += format("\hbox{$\ch^2/ndf = %#.2f", r.chi2) + format("/%.0f", r.ndf) + format("= %#.2f$}", r.chi2_norm);
 	l += format("\hbox{$\hbox{p-value} = %#.2f$}", r.prob);
 	l += format("\hbox{$\et = (%#.2f", r.eta) + format("\pm %#.2f)$}", r.eta_unc);

@@ -1,9 +1,9 @@
 import root;
 import pad_layout;
 include "../common.asy";
-//include "shared.asy";
+include "shared.asy";
 
-string fit_file = topDir + "data/simu/bla/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_both.root";
+string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_BothBetas.root";
 
 string fit_iteration = "iteration 2";
 

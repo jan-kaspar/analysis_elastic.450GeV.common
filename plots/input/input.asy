@@ -61,7 +61,7 @@ void DrawOne(int h_idx, real t_min, real t_max, real x_size)
 		DrawSystematics(t, h_dsdt_cen_stat, h_dsdt_rel_syst, p);
 	}
 
-	xlimits(t_min, t_max, Crop);
+	limits((t_min, 3e1), (t_max, 4e3), Crop);
 }
 
 //----------------------------------------------------------------------------------------------------

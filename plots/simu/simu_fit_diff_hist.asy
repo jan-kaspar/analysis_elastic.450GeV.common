@@ -4,8 +4,8 @@ include "../common.asy";
 include "shared.asy";
 
 string fit_types[], f_labels[];
-fit_types.push("high"); f_labels.push("high beta");
-fit_types.push("both"); f_labels.push("high and low beta");
+fit_types.push("HighBeta"); f_labels.push("high beta");
+fit_types.push("BothBetas"); f_labels.push("high and low beta");
 
 string errors[], e_labels[];
 pen e_pens[];
