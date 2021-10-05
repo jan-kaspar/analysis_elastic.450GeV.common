@@ -88,7 +88,7 @@ then
 
 	tag="fit_${output}_step_b"
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
-		-init-eta 1. -use-eta-from-Ap 1 -init-Ap "$Ap"\
+		-use-A-from-Ap 1 -init-Ap "$Ap"\
 		-init-rho 0.010 -use-rho-fixed 1\
 		-init-b1 "$b1" -use-b1-fixed 1\
 		-t-max-high-beta 0.0005 \
