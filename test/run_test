@@ -141,11 +141,11 @@ function MainAnalysisComparison()
 
 		return 1
 	else
-		MakeOneComparison "data/fits/$fit_version/fit_HighBeta.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/fits/$fit_version/fit_HighBeta.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta-single-0.020.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta-single-0.020.root" "final/results"
 
-		MakeOneComparison "data/fits/$fit_version/fit_BothBetas.root" "iteration 2/g_fit_CH"
-		MakeOneComparison "data/fits/$fit_version/fit_BothBetas.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_BothBetas-single.root" "iteration 2/g_fit_CH"
+		MakeOneComparison "data/fits/$fit_version/fit_BothBetas-single.root" "final/results"
 
 		if [ "$n_diff" -eq "0" ]
 		then
