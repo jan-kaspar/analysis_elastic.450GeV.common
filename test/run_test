@@ -147,6 +147,10 @@ function MainAnalysisComparison()
 		MakeOneComparison "data/fits/$fit_version/fit_BothBetas-single.root" "iteration 2/g_fit_CH"
 		MakeOneComparison "data/fits/$fit_version/fit_BothBetas-single.root" "final/results"
 
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta-sequence-0.005-0.020_step_a.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta-sequence-0.005-0.020_step_b.root" "final/results"
+		MakeOneComparison "data/fits/$fit_version/fit_HighBeta-sequence-0.005-0.020_step_c.root" "final/results"
+
 		if [ "$n_diff" -eq "0" ]
 		then
 			echo "<li>OK</li>" >> "$report"
