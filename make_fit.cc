@@ -625,8 +625,7 @@ Result Minimization::GetResults() const
 	
 	const ROOT::Fit::FitResult &fr = fitter.Result();
 
-	// TODO: uncomment, add to plots
-	//r.Set("n_b", model.n_b);
+	r.Set("n_b", model.n_b);
 
 	const unsigned int ndf = GetNDF();
 
