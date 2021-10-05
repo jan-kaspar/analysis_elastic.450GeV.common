@@ -34,6 +34,8 @@ mark mSY = mSq+false;
 struct Results
 {
 	real n_b;
+	real n_points;
+	real n_free_fit_parameters;
 
 	real chi2, chi2_norm;
 	real ndf;
@@ -63,6 +65,8 @@ Results LoadResults(RootObject h)
 		real v = h.rExec("GetBinContent", bi);
 
 		if (l == "n_b") r.n_b = v;
+		if (l == "n_points") r.n_points = v;
+		if (l == "n_free_fit_parameters") r.n_free_fit_parameters = v;
 
 		if (l == "chi2") r.chi2 = v;
 		if (l == "ndf") r.ndf = v;
@@ -237,6 +241,7 @@ void DrawOneFit(string type)
 	NewPad(false);
 	string l = "\vbox{\hbox{\bf version: " + replace(version, "_", "-") + "}\hbox{\bf type: " + replace(type, "_", "-") +  "}\hbox{iteration: " + fit_iteration + "}";
 	l += format("\hbox{$N_b = %.0f$}", r.n_b);
+	l += format("\hbox{$\hbox{points: } %.0f$", r.n_points) + format(", $\hbox{free fit pars: } %.0f$}", r.n_free_fit_parameters);
 	l += format("\hbox{$\ch^2/ndf = %#.2f", r.chi2) + format("/%.0f", r.ndf) + format("= %#.2f$}", r.chi2_norm);
 	l += format("\hbox{$\hbox{p-value} = %#.2f$}", r.prob);
 	l += format("\hbox{$\et = (%#.2f", r.eta) + format("\pm %#.2f)$}", r.eta_unc);

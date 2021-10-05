@@ -624,6 +624,8 @@ Result Minimization::GetResults() const
 	const ROOT::Fit::FitResult &fr = fitter.Result();
 
 	r.Set("n_b", model.n_b);
+	r.Set("n_points", data.NPoints());
+	r.Set("n_free_fit_parameters", model.n_free_fit_parameters);
 
 	const unsigned int ndf = GetNDF();
 
