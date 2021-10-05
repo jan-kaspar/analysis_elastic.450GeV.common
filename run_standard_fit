@@ -91,7 +91,7 @@ then
 		-use-A-from-Ap 1 -init-Ap "$Ap"\
 		-init-rho 0.010 -use-rho-fixed 1\
 		-init-b1 "$b1" -use-b1-fixed 1\
-		-t-max-high-beta 0.0005 \
+		-t-max-high-beta 0.0004 \
 			&> "$tag.log" || exit 11
 
 	eta=`cat $tag.log|grep "eta-->"`
