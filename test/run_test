@@ -204,7 +204,6 @@ function SimuComparison()
 
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/g_psi_re"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/g_psi_im"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/low_beta/g_data_dsdt_unc_comb"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/high_beta/g_data_dsdt_unc_comb"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/g_fit_CH"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020.root" "iteration 2/g_fit_CH"
