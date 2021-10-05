@@ -12,7 +12,7 @@ binnings="sb1"
 
 errors="none stat syst norm stat,syst,norm"
 
-fit_types="HighBeta BothBetas"
+fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
 
 # parse command line
 function PrintUsage()
