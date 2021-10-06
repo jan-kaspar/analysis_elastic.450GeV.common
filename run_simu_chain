@@ -17,6 +17,8 @@ errors="none stat syst norm stat,syst,norm"
 
 fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
 
+#----------------------------------------------------------------------------------------------------
+
 # parse command line
 function PrintUsage()
 {
@@ -30,6 +32,8 @@ function PrintUsage()
 	echo "    -errors <string>         space-separated list of error models"
 	echo "    -fast                    use settings for a fast check"
 }
+
+#----------------------------------------------------------------------------------------------------
 
 while [ -n "$1" ]
 do
@@ -85,6 +89,31 @@ then
 	exit 2
 fi
 
+
+
+#----------------------------------------------------------------------------------------------------
+# save info
+
+topDir="data/simu/$version"
+mkdir -p "$topDir"
+
+cd "$BASE_DIR"
+
+(
+	echo "* recent commits: "
+	git log --oneline | head -n 5
+
+	echo ""
+	echo "* status: "
+	git status -uno
+
+	echo ""
+	echo "* config: "
+	echo "    input_version=$input_version"
+) > "$topDir/info"
+
+
+
 #----------------------------------------------------------------------------------------------------
 
 function RunOne()
@@ -135,9 +164,6 @@ function RunOne()
 # execute
 make -j8 || exit 3
 
-topDir="data/simu/$version"
-
-mkdir -p "$topDir"
 cd "$topDir"
 
 $BASE_DIR/.simu_sample_models &> "models.log" || exit 21
