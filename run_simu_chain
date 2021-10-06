@@ -145,16 +145,14 @@ function RunOne()
 
 	if [ "$run_fits" == "1" ]
 	then
-		tag="HighBeta-single-0.020"
-		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_${tag}.root"\
-			-seed-min 1 -seed-max $n_repetitions -output "process_fits_${tag}.root" &> "process_fits_${tag}.log" || exit 25
+		for tp in ${fit_types[*]}
+		do
+			pattern="$tp"
+			if [[ $tp == *"sequence"* ]]; then pattern="${tp}_step_c"; fi
 
-		tag="HighBeta-sequence-0.005-0.020"
-		$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_${tag}_step_c.root"\
-			-seed-min 1 -seed-max $n_repetitions -output "process_fits_${tag}.root" &> "process_fits_${tag}.log" || exit 26
-
-		#$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_BothBetas.root"\
-		#	-seed-min 1 -seed-max $n_repetitions -output "process_fits_BothBetas.root" &> "process_fits_BothBetas.log" || exit 27
+			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_${pattern}.root"\
+				-seed-min 1 -seed-max $n_repetitions -output "process_fits_${tp}.root" &> "process_fits_${tp}.log" || exit 25
+		done
 	fi
 }
 
