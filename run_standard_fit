@@ -53,6 +53,15 @@ then
 fi
 
 # run the fit
+if [ "$fit_type" == "HighBeta-single-0.015" ]
+then
+	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
+		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-t-max-high-beta 0.015 \
+			&> "fit_$output.log" || exit 10
+	exit 0
+fi
+
 if [ "$fit_type" == "HighBeta-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
@@ -62,11 +71,11 @@ then
 	exit 0
 fi
 
-if [ "$fit_type" == "HighBeta-single-0.015" ]
+if [ "$fit_type" == "HighBeta-3-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
 		-output-root "fit_$output.root" -output-results "fit_$output.results" \
-		-t-max-high-beta 0.015 \
+		-n-b 3 -t-max-high-beta 0.020 \
 			&> "fit_$output.log" || exit 10
 	exit 0
 fi
