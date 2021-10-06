@@ -2,8 +2,11 @@
 
 # defaults
 version=""
+
 n_repetitions="10"
-models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
+
+#models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
+models="exp1_con_rho0.10"
 
 input_version="version_2"
 
