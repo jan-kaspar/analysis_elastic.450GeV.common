@@ -118,42 +118,86 @@ cd "$BASE_DIR"
 
 function RunOne()
 {
+	echo "* $model, $error_model"
+
+	# build makefile
+	makefile="makefile"
+	rm -f "$makefile"
+
+	(
+		targets="process_hists"
+		if [ "$run_fits" == "1" ]; then targets="$targets process_fits"; fi
+		echo "all: $targets"
+	) >> "$makefile"
+
+	seeds=""
+	seed_fits=""
+
 	for seed in `seq 1 $n_repetitions`
 	do
-		echo "* $model, $error_model, seed $seed"
+		d_seed="seed_$seed"
+		mkdir -p "$d_seed"
 
-		mkdir -p "seed_$seed"
-		cd "seed_$seed"
+		tag_seed="seed_${seed}_hist"
 
-		$BASE_DIR/.simu_make_histograms -model-file "../../../models.root" -model-obj "$model/g_dsdt_CH" \
-			-input-file "$BASE_DIR/data/input/$input_version/import.root" -binnings "$binnings" -seed $seed \
-			-sim-stat-err $e_stat -sim-syst-err $e_syst -sim-norm-err $e_norm\
-			&> "histograms.log" || exit 22
+		(
+			echo ""
+			echo "$tag_seed:"
+			echo "	@echo \"    - seed $seed\""
+			echo "	@cd \"$d_seed\"; $BASE_DIR/.simu_make_histograms -model-file \"../../../models.root\" -model-obj \"$model/g_dsdt_CH\" \\"
+			echo "		-input-file \"$BASE_DIR/data/input/$input_version/import.root\" -binnings \"$binnings\" -seed $seed \\"
+			echo "		-sim-stat-err $e_stat -sim-syst-err $e_syst -sim-norm-err $e_norm\\"
+			echo "			&> \"histograms.log\""
+		) >> "$makefile"
 
-		if [ "$run_fits" == "1" ]
-		then
-			for tp in ${fit_types[*]}
-			do
-				$BASE_DIR/run_standard_fit -type "$tp" -input "histograms.root" -output "$tp" || exit 23
-			done
-		fi
-	
-		cd ..
-	done
+		seeds="$seeds $tag_seed"
 
-	$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions -binnings "$binnings" &> "process_histograms.log" || exit 24
-
-	if [ "$run_fits" == "1" ]
-	then
 		for tp in ${fit_types[*]}
 		do
-			pattern="$tp"
-			if [[ $tp == *"sequence"* ]]; then pattern="${tp}_step_c"; fi
+			tag_fit="seed_${seed}_fit_${tp}"
 
-			$BASE_DIR/.simu_process_fits -ref-file "../../models.root" -ref-object "$model/info" -input-pattern "seed_%u/fit_${pattern}.root"\
-				-seed-min 1 -seed-max $n_repetitions -output "process_fits_${tp}.root" &> "process_fits_${tp}.log" || exit 25
+			(
+				echo ""
+				echo "$tag_fit: $tag_seed"
+				echo "	@cd \"$d_seed\"; $BASE_DIR/run_standard_fit -type \"$tp\" -input \"histograms.root\" -output \"$tp\""
+			) >> "$makefile"
+		
+			seed_fits="$seed_fits $tag_fit"
 		done
-	fi
+	done
+
+	(
+		echo ""
+		echo "process_hists: $seeds"
+		echo "	@$BASE_DIR/.simu_process_histograms -seed-min 1 -seed-max $n_repetitions -binnings \"$binnings\" &> \"process_histograms.log\""
+	) >> "$makefile"
+
+	process_fits=""
+
+	for tp in ${fit_types[*]}
+	do
+		pattern="$tp"
+		if [[ $tp == *"sequence"* ]]; then pattern="${tp}_step_c"; fi
+
+		tag="process_fits_${tp}"
+
+		(
+			echo ""
+			echo "$tag: $seed_fits"
+			echo "	@$BASE_DIR/.simu_process_fits -ref-file \"../../models.root\" -ref-object \"$model/info\" -input-pattern \"seed_%u/fit_${pattern}.root\"\\"
+			echo "		-seed-min 1 -seed-max $n_repetitions -output \"process_fits_${tp}.root\" &> \"process_fits_${tp}.log\""
+		) >> "$makefile"
+
+		process_fits="$process_fits $tag"
+	done
+
+	(
+		echo ""
+		echo "process_fits: $process_fits"
+	) >> "$makefile"
+
+	# run makefile
+	make -j20 -f "$makefile"
 }
 
 
@@ -186,7 +230,7 @@ do
 
 		run_fits="1"
 
-		RunOne &
+		RunOne
 
 		cd ..
 	done
