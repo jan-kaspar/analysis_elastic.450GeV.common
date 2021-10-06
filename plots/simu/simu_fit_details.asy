@@ -3,14 +3,15 @@ import pad_layout;
 include "../common.asy";
 include "shared.asy";
 
-string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_BothBetas.root";
+//string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_HighBeta-single-0.020.root";
+string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_3/fit_HighBeta-sequence-0.005-0.020_step_a.root";
 
 string fit_iteration = "iteration 2";
 
 string datasets[];
 pen d_pens[];
 datasets.push("high_beta"); d_pens.push(red + squarecap);
-datasets.push("low_beta"); d_pens.push(blue + squarecap);
+//datasets.push("low_beta"); d_pens.push(blue + squarecap);
 
 TGraph_errorBar = None;
 

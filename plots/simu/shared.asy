@@ -1,4 +1,4 @@
-string version = "iv2_v1";
+string version = "iv2_v2";
 string model = "exp1_con_rho0.10";
 string binning = "sb1";
 

@@ -5,16 +5,14 @@ include "../common.asy";
 
 string version = "iv2_v1";
 
-string types[] = {
-	//"HighBeta",
-	//"HighBeta-LowT",
+string types[], t_steps[][];
+types.push("HighBeta-single-0.015"); t_steps.push(new string[] {""});
+types.push("HighBeta-single-0.020"); t_steps.push(new string[] {""});
+types.push("HighBeta-3-single-0.020"); t_steps.push(new string[] {""});
 
-	"HighBeta-sequence-0.005-0.020_step_a",
-	"HighBeta-sequence-0.005-0.020_step_b",
-	"HighBeta-sequence-0.005-0.020_step_c"
+types.push("HighBeta-sequence-0.005-0.020"); t_steps.push(new string[] {"_step_a", "_step_b", "_step_c"});
 
-	//"BothBetas",
-};
+//types.push("BothBetas-single"); t_steps.push(new string[] {""});
 
 string fit_iteration = "iteration 2";
 
@@ -161,8 +159,10 @@ void DrawOne(string fit_file, real t_min, real t_max, real x_size)
 	}
 
 	RootObject g_fit_CH = RootGetObject(fit_file, fit_iteration + "/g_fit_CH");
+	RootObject g_fit_H = RootGetObject(fit_file, fit_iteration + "/g_fit_H");
 
 	draw(g_fit_CH, "l", heavygreen, "fit C+H");
+	draw(g_fit_H, "l", black+dashed, "fit H");
 
 	limits((t_min, 5e1), (t_max, 3e3), Crop);
 }
@@ -267,7 +267,9 @@ void DrawOneFit(string type)
 
 for (int ti : types.keys)
 {
-	DrawOneFit(types[ti]);
+	for (int si : t_steps[ti].keys)
+		DrawOneFit(types[ti] + t_steps[ti][si]);
+
+	GShipout("fit_details_" + types[ti] + ".pdf", hSkip=1mm, vSkip=0mm);
 }
 
-GShipout(hSkip=1mm, vSkip=0mm);
