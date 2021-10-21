@@ -209,10 +209,10 @@ function SimuComparison()
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020/fit.root" "iteration 2/g_fit_CH"
 		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/seed_$simu_seed/fit_HighBeta-single-0.020/fit.root" "final/results"
 
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020/fit.root" "eta/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020/fit.root" "A/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020/fit.root" "rho/h_diff"
-		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020/fit.root" "si_tot/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020.root" "eta/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020.root" "A/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020.root" "rho/h_diff"
+		MakeOneComparison "data/simu/$simu_version/$simu_model/errors_stat,syst,norm/process_fits_HighBeta-single-0.020.root" "si_tot/h_diff"
 
 		if [ "$n_diff" -eq "0" ]
 		then
