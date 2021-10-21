@@ -15,7 +15,9 @@ binnings="sb1"
 
 errors="none stat syst norm stat,syst,norm"
 
-fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
+fit_types="HighBeta-single-0.020"
+#fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
+#fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020 HighBeta-sequence-0.010-0.020 HighBeta-sequence-0.015-0.020 HighBeta-sequence-0.015-0.025"
 
 #----------------------------------------------------------------------------------------------------
 
@@ -176,15 +178,15 @@ function RunOne()
 
 	for tp in ${fit_types[*]}
 	do
-		pattern="$tp"
-		if [[ $tp == *"sequence"* ]]; then pattern="${tp}_step_c"; fi
+		pattern="$tp/fit.root"
+		if [[ $tp == *"sequence"* ]]; then pattern="${tp}/step_1_c.root"; fi
 
 		tag="process_fits_${tp}"
 
 		(
 			echo ""
 			echo "$tag: $seed_fits"
-			echo "	@$BASE_DIR/.simu_process_fits -ref-file \"../../models.root\" -ref-object \"$model/info\" -input-pattern \"seed_%u/fit_${pattern}.root\"\\"
+			echo "	@$BASE_DIR/.simu_process_fits -ref-file \"../../models.root\" -ref-object \"$model/info\" -input-pattern \"seed_%u/fit_${pattern}\"\\"
 			echo "		-seed-min 1 -seed-max $n_repetitions -output \"process_fits_${tp}.root\" &> \"process_fits_${tp}.log\""
 		) >> "$makefile"
 
