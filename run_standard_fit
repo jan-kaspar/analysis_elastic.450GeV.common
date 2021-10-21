@@ -94,7 +94,7 @@ then
 
 	rho="0.10"
 
-	for rep in `seq 25`
+	for rep in `seq 1`
 	do
 		tag="$subdir/step_${rep}_a"
 		$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
