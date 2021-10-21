@@ -52,70 +52,91 @@ then
 	exit 1
 fi
 
+# make subdirectory
+subdir="fit_$output"
+mkdir -p "$subdir"
+
 # run the fit
 if [ "$fit_type" == "HighBeta-single-0.015" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
-		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" \
 		-t-max-high-beta 0.015 \
-			&> "fit_$output.log" || exit 10
+			&> "$subdir/fit.log" || exit 10
 	exit 0
 fi
 
 if [ "$fit_type" == "HighBeta-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
-		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" \
 		-t-max-high-beta 0.020 \
-			&> "fit_$output.log" || exit 10
+			&> "$subdir/fit.log" || exit 10
 	exit 0
 fi
 
 if [ "$fit_type" == "HighBeta-3-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
-		-output-root "fit_$output.root" -output-results "fit_$output.results" \
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" \
 		-n-b 3 -t-max-high-beta 0.020 \
-			&> "fit_$output.log" || exit 10
+			&> "$subdir/fit.log" || exit 10
 	exit 0
 fi
 
-if [ "$fit_type" == "HighBeta-sequence-0.005-0.020" ]
+if [[ "$fit_type" == "HighBeta-sequence"* ]]
 then
-	tag="fit_${output}_step_a"
-	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
-		-init-eta 1. -use-eta-fixed 1\
-		-init-rho 0.010 -use-rho-fixed 1\
-		-t-min-high-beta 0.005 -t-max-high-beta 0.020 \
-			&> "$tag.log" || exit 10
+	buf=${fit_type#HighBeta-sequence-}
 
-	Ap=`cat $tag.log|grep "Ap-->"`
-	Ap=${Ap#*-->}
+	t1="0.0004"
+	t2=${buf%-*}
+	t3=${buf#*-}
 
-	b1=`cat $tag.log|grep "b1-->"`
-	b1=${b1#*-->}
+	rho="0.10"
 
-	tag="fit_${output}_step_b"
-	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
-		-use-A-from-Ap 1 -init-Ap "$Ap"\
-		-init-rho 0.010 -use-rho-fixed 1\
-		-init-b1 "$b1" -use-b1-fixed 1\
-		-t-max-high-beta 0.0004 \
-			&> "$tag.log" || exit 11
+	for rep in `seq 25`
+	do
+		tag="$subdir/step_${rep}_a"
+		$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+			-init-eta 1. -use-eta-fixed 1\
+			-init-rho "$rho" -use-rho-fixed 1\
+			-t-min-high-beta "$t2" -t-max-high-beta "$t3" \
+				&> "$tag.log" || exit 10
 
-	eta=`cat $tag.log|grep "eta-->"`
-	eta=${eta#*-->}
+		Ap=`cat $tag.log|grep "Ap-->"`
+		Ap=${Ap#*-->}
 
-	A=`cat $tag.log|grep "A-->"`
-	A=${A#*-->}
+		b1=`cat $tag.log|grep "b1-->"`
+		b1=${b1#*-->}
 
-	tag="fit_${output}_step_c"
-	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
-		-init-eta "$eta" -use-eta-fixed 1\
-		-init-A "$A" -use-A-fixed 1\
-		-init-b1 "$b1" -use-b1-fixed 1\
-		-t-max-high-beta 0.005 \
-			&> "$tag.log" || exit 11
+		rho=`cat $tag.log|grep "rho-->"`
+		rho=${rho#*-->}
+
+		tag="$subdir/step_${rep}_b"
+		$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+			-use-A-from-Ap 1 -init-Ap "$Ap"\
+			-init-rho "$rho" -use-rho-fixed 1\
+			-init-b1 "$b1" -use-b1-fixed 1\
+			-t-max-high-beta "$t1" \
+				&> "$tag.log" || exit 11
+
+		eta=`cat $tag.log|grep "eta-->"`
+		eta=${eta#*-->}
+
+		A=`cat $tag.log|grep "A-->"`
+		A=${A#*-->}
+
+		tag="$subdir/step_${rep}_c"
+		$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
+			-init-eta "$eta" -use-eta-fixed 1\
+			-init-A "$A" -use-A-fixed 1\
+			-init-b1 "$b1" -use-b1-fixed 1\
+			-t-max-high-beta "$t2" \
+				&> "$tag.log" || exit 12
+
+		rho=`cat $tag.log|grep "rho-->"`
+		rho=${rho#*-->}
+	done
 
 	exit 0
 fi
@@ -123,7 +144,7 @@ fi
 if [ "$fit_type" == "BothBetas-single" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta,low_beta" \
-		-output-root "fit_$output.root" -output-results "fit_$output.results" &> "fit_$output.log" || exit 10
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" &> "$subdir/fit.log" || exit 10
 	exit 0
 fi
 
