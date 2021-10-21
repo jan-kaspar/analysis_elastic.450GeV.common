@@ -4,7 +4,7 @@ include "../common.asy";
 include "shared.asy";
 
 //string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_HighBeta-single-0.020.root";
-string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_3/fit_HighBeta-sequence-0.005-0.020_step_a.root";
+string fit_file = topDir + "data/simu/" + version + "/exp1_con_rho0.10/errors_stat,syst,norm/seed_1/fit_HighBeta-sequence-0.005-0.020_step_b.root";
 
 string fit_iteration = "iteration 2";
 
