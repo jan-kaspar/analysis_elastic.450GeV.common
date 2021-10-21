@@ -15,8 +15,7 @@ binnings="sb1"
 
 errors="none stat syst norm stat,syst,norm"
 
-fit_types="HighBeta-single-0.020"
-#fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
+fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
 #fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020 HighBeta-sequence-0.010-0.020 HighBeta-sequence-0.015-0.020 HighBeta-sequence-0.015-0.025"
 
 #----------------------------------------------------------------------------------------------------
@@ -179,7 +178,7 @@ function RunOne()
 	for tp in ${fit_types[*]}
 	do
 		pattern="$tp/fit.root"
-		if [[ $tp == *"sequence"* ]]; then pattern="${tp}/step_1_c.root"; fi
+		if [[ $tp == *"sequence"* ]]; then pattern="${tp}/final_c.root"; fi
 
 		tag="process_fits_${tp}"
 

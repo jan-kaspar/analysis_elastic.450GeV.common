@@ -94,7 +94,9 @@ then
 
 	rho="0.10"
 
-	for rep in `seq 1`
+	n_iterations="1"
+
+	for rep in `seq $n_iterations`
 	do
 		tag="$subdir/step_${rep}_a"
 		$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" -output-root "$tag.root" -output-results "$tag.results" \
@@ -136,6 +138,13 @@ then
 
 		rho=`cat $tag.log|grep "rho-->"`
 		rho=${rho#*-->}
+	done
+
+	# make final links
+	for step in "a" "b" "c"
+	do
+		rm -f "$subdir/final_${step}.root"
+		ln -s "step_${n_iterations}_${step}.root" "$subdir/final_${step}.root"
 	done
 
 	exit 0
