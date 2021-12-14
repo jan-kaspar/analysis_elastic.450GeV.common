@@ -5,7 +5,7 @@ include "shared.asy";
 
 string fit_types[], f_labels[];
 fit_types.push("HighBeta-single-0.020"); f_labels.push("high beta, single, $|t|_{\rm max} = 0.020$");
-fit_types.push("HighBeta-sequence-0.005-0.020"); f_labels.push("high beta, sequence, $|t|_{\rm max} = 0.020$");
+//fit_types.push("HighBeta-sequence-0.005-0.020"); f_labels.push("high beta, sequence, $|t|_{\rm max} = 0.020$");
 //fit_types.push("BothBetas"); f_labels.push("high and low beta");
 
 string errors[], e_labels[];

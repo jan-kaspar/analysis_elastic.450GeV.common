@@ -3,14 +3,14 @@ import pad_layout;
 include "../common.asy";
 include "shared.asy";
 
-version = "iv2_TEST";
+version = "iv2_v3";
 
 string models[];
-//models.push("exp1_con_rho0.05");
+models.push("exp1_con_rho0.05");
 models.push("exp1_con_rho0.10");
 models.push("exp1_con_rho0.15");
 
-string fit_type = "HighBeta-sequence-0.015-0.025";
+string fit_type = "HighBeta-sequence-0.005-0.020";
 
 string errors[], e_labels[];
 pen e_pens[];
@@ -18,7 +18,7 @@ errors.push("none"); e_labels.push("none"); e_pens.push(black);
 //errors.push("stat"); e_labels.push("stat"); e_pens.push(blue);
 //errors.push("syst"); e_labels.push("syst"); e_pens.push(red);
 //errors.push("norm"); e_labels.push("norm"); e_pens.push(magenta);
-errors.push("stat,syst,norm"); e_labels.push("stat,syst,norm"); e_pens.push(heavygreen);
+//errors.push("stat,syst,norm"); e_labels.push("stat,syst,norm"); e_pens.push(heavygreen);
 
 string parameters[], p_captions[], p_labels[];
 parameters.push("eta"); p_captions.push("$\eta$"); p_labels.push("$\De\eta$");

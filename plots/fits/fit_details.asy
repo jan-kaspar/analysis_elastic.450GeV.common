@@ -3,14 +3,14 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-string version = "iv2_v1";
+string version = "iv3-2_v1";
 
 string types[], t_steps[][];
 types.push("HighBeta-single-0.015"); t_steps.push(new string[] {""});
 types.push("HighBeta-single-0.020"); t_steps.push(new string[] {""});
-types.push("HighBeta-3-single-0.020"); t_steps.push(new string[] {""});
+//types.push("HighBeta-3-single-0.020"); t_steps.push(new string[] {""});
 
-types.push("HighBeta-sequence-0.005-0.020"); t_steps.push(new string[] {"_step_a", "_step_b", "_step_c"});
+//types.push("HighBeta-sequence-0.005-0.020"); t_steps.push(new string[] {"_step_a", "_step_b", "_step_c"});
 
 //types.push("BothBetas-single"); t_steps.push(new string[] {""});
 
@@ -232,7 +232,7 @@ void DrawOneRelative(string fit_file, real t_min, real t_max, real x_size)
 
 void DrawOneFit(string type)
 {
-	string fit_file = topDir + "data/fits/" + version + "/fit_" + type + ".root";
+	string fit_file = topDir + "data/fits/" + version + "/fit_" + type + "/fit.root";
 
 	Results r = LoadResults(RootGetObject(fit_file, "final/results"));
 

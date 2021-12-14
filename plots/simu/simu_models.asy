@@ -32,8 +32,9 @@ void DrawOne(string object, string y_label, bool y_log, real y_min, real y_max)
 
 	limits((0, y_min), (0.03, y_max), Crop);
 
-	yaxis(XEquals(0.005, false), green);
-	yaxis(XEquals(0.020, false), magenta);
+	yaxis(XEquals(0.0004, false), cyan + dashed);
+	yaxis(XEquals(0.005, false), heavygreen + dashed);
+	yaxis(XEquals(0.020, false), magenta + dashed);
 }
 
 //----------------------------------------------------------------------------------------------------
