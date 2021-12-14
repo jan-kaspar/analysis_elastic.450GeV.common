@@ -6,7 +6,10 @@
 #include "TDirectory.h"
 #include "TH1D.h"
 #include "TGraph.h"
+#include "TH2D.h"
+#include "TProfile2D.h"
 
+#include <cstdio>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -29,6 +32,54 @@ void PrintUsage()
 	printf("    -input-pattern <string>    pattern of input file paths\n");
 
 	printf("    -output <string>           output file name\n");
+}
+
+//----------------------------------------------------------------------------------------------------
+
+struct ReducedResult {
+	double de_si_tot, de_B, de_rho;
+};
+
+//----------------------------------------------------------------------------------------------------
+
+void MakeOneFit(const vector<ReducedResult> &res, double range_de_B, double range_de_si_tot)
+{
+	// make fit
+	// convention: x = de_B, y = de_si_tot, z = de_rho
+
+	double s_xx=0., s_xy=0., s_yy=0., s_zx=0., s_zy=0.;
+	for (const auto &r : res)
+	{
+		s_xx += r.de_B * r.de_B;
+		s_xy += r.de_B * r.de_si_tot;
+		s_yy += r.de_si_tot * r.de_si_tot;
+		s_zx += r.de_rho * r.de_B;
+		s_zy += r.de_rho * r.de_si_tot;
+	}
+
+	const double det = s_xx*s_yy - s_xy*s_xy;
+	const double al = ( s_yy*s_zx - s_xy*s_zy) / det;
+	const double be = (-s_xy*s_zx + s_xx*s_zy) / det;
+
+	printf("al = %.3E\n", al);
+	printf("be = %.3E\n", be);
+
+	// plot residuals
+	TProfile2D *p2 = new TProfile2D("p2", ";de_si_tot;de_B", 25, -range_de_si_tot, +range_de_si_tot, 25, -range_de_B, +range_de_B, "s");
+	for (const auto &r : res)
+	{
+		const double diff = r.de_rho - al * r.de_B - be * r.de_si_tot;
+		p2->Fill(r.de_si_tot, r.de_B, diff);
+	}
+	p2->Write();
+
+	TH2D *h2_rms = new TH2D("h2_rms", ";de_si_tot;de_B", 25, -range_de_si_tot, +range_de_si_tot, 25, -range_de_B, +range_de_B);
+	for (int bi = 1; bi <= h2_rms->GetNbinsX(); ++bi)
+	{
+		for (int bj = 1; bj <= h2_rms->GetNbinsY(); ++bj)
+			h2_rms->SetBinContent(bi, bj, p2->GetBinError(bi, bj));
+	}
+	h2_rms->Write();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -79,10 +130,11 @@ int main(int argc, const char **argv)
 	struct ParameterInfo
 	{
 		string tag;
+		double range;
 
 		shared_ptr<TH1D> h_diff;
 
-		ParameterInfo(const string &_t, double _r) : tag(_t), h_diff(new TH1D("", "", 40, -_r, +_r)) {}
+		ParameterInfo(const string &_t, double _r) : tag(_t), range(_r), h_diff(new TH1D("", "", 40, -_r, +_r)) {}
 	};
 
 	vector<ParameterInfo> parameters = {
@@ -105,6 +157,17 @@ int main(int argc, const char **argv)
 	// prepare data
 	Stat st(parameters.size());
 
+	vector<vector<TH2D*>> correlation_plots;
+	for (unsigned int i = 0; i < parameters.size(); ++i)
+	{
+		vector<TH2D*> v;
+		for (unsigned int j = 0; j < parameters.size(); ++j)
+			v.push_back(new TH2D("", "", 25, -parameters[i].range, +parameters[i].range, 25, -parameters[j].range, +parameters[j].range));
+		correlation_plots.push_back(move(v));
+	}
+
+	vector<ReducedResult> reducedResults;
+
 	// load reference
 	unique_ptr<TFile> f_ref(new TFile(ref_file.c_str()));
 	TH1D *h_ref = (TH1D *) f_ref->Get(ref_object.c_str());
@@ -121,6 +184,8 @@ int main(int argc, const char **argv)
 		Result r_test(h_test);
 
 		vector<double> diff(parameters.size());
+		ReducedResult rr;
+
 		for (unsigned int pi = 0; pi < parameters.size(); ++pi)
 		{
 			const auto &p = parameters[pi];
@@ -135,10 +200,22 @@ int main(int argc, const char **argv)
 			else
 				diff[pi] = v_test - v_ref;
 
+			if (p.tag == "B") rr.de_B = diff[pi];
+			if (p.tag == "rho") rr.de_rho = diff[pi];
+			if (p.tag == "si_tot") rr.de_si_tot = diff[pi];
+
 			p.h_diff->Fill(diff[pi]);
 		}
 
+		reducedResults.push_back(rr);
+
 		st.Fill(diff);
+
+		for (unsigned int i = 0; i < parameters.size(); ++i)
+		{
+			for (unsigned int j = 0; j < parameters.size(); ++j)
+				correlation_plots[i][j]->Fill(diff[i], diff[j]);
+		}
 	}
 
 	// save results
@@ -157,6 +234,30 @@ int main(int argc, const char **argv)
 		g_data->SetPoint(1, st.GetStdDev(pi), st.GetStdDevUncGauss(pi));
 		g_data->Write("g_data");
 	}
+
+	gDirectory = f_out->mkdir("correlations");
+
+	for (unsigned int i = 0; i < parameters.size(); ++i)
+	{
+		for (unsigned int j = 0; j < parameters.size(); ++j)
+		{
+			TH2D *h2 = correlation_plots[i][j];
+			h2->SetName((parameters[j].tag + " vs " + parameters[i].tag).c_str());
+			h2->SetTitle((";" + parameters[i].tag + ";" + parameters[j].tag).c_str());
+			h2->Write();
+		}
+	}
+
+	gDirectory = f_out->mkdir("fit");
+
+	double r_de_B = 1., r_de_tot = 1.;
+	for (const auto &p : parameters)
+	{
+		if (p.tag == "B") r_de_B = p.range;
+		if (p.tag == "si_tot") r_de_tot = p.range;
+	}
+
+	MakeOneFit(reducedResults, r_de_B, r_de_tot);
 
 	return 0;
 }
