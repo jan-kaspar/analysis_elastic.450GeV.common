@@ -28,6 +28,8 @@ for (int ei : errors.keys)
 
 		NewPad("$\De\si_{\rm tot}\ung{mb}$", "$\De B\ung{GeV^2}$");
 		TH2_zLabel = "mean $\De\rh$ residual";
+		TH2_z_min = -0.02001;
+		TH2_z_max = +0.02001;
 		RootObject h2 = RootGetObject(f, "fit/p2");
 		draw(h2);
 		limits((-3, -8), (+3, +8));
@@ -36,5 +38,6 @@ for (int ei : errors.keys)
 		TH2_zLabel = "RMS $\De\rh$ residual";
 		RootObject h2 = RootGetObject(f, "fit/h2_rms");
 		draw(h2);
+		limits((-3, -8), (+3, +8));
 	}
 }

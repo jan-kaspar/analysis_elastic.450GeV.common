@@ -29,14 +29,14 @@ for (int ei : errors.keys)
 		NewPad("$\De B\ung{GeV^2}$", "$\De\rh$");
 		RootObject h2 = RootGetObject(f, "correlations/rho vs B");
 		draw(h2);
-		real r = 8, sl = 8.28e-3;
+		real r = 8, sl = 1.455e-2;
 		draw((-r, -r * sl)--(+r, +r * sl), dashed);
 		limits((-8, -0.1), (+8, +0.1), Crop);
 
 		NewPad("$\De\si_{\rm tot}\ung{mb}$", "$\De\rh$");
 		RootObject h2 = RootGetObject(f, "correlations/rho vs si_tot");
 		draw(h2);
-		real r = 3, sl = -8.48e-3;
+		real r = 3, sl = -5.33e-3;
 		draw((-r, -r * sl)--(+r, +r * sl), dashed);
 		limits((-3, -0.1), (+3, +0.1), Crop);
 	}
