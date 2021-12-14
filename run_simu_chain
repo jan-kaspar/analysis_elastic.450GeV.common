@@ -8,14 +8,15 @@ n_repetitions="10"
 #models="exp1_con_rho0.05 exp1_con_rho0.10 exp1_con_rho0.15"
 models="exp1_con_rho0.10"
 
-input_version="version_2"
+input_version="version_3-2"
 
 binnings="sb1"
 #binnings="sb1,sb2,sb3"
 
 errors="none stat syst norm stat,syst,norm"
 
-fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
+fit_types="HighBeta-single-0.020"
+#fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020"
 #fit_types="HighBeta-single-0.020 HighBeta-sequence-0.005-0.020 HighBeta-sequence-0.010-0.020 HighBeta-sequence-0.015-0.020 HighBeta-sequence-0.015-0.025"
 
 #----------------------------------------------------------------------------------------------------
