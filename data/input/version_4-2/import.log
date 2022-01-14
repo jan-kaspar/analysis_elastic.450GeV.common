@@ -1,0 +1,40 @@
+-------------------- low beta --------------------
+
+* recent commits: 
+5e4ebb2 set vtx_y to 0
+d01de0d add optics uncertainties
+c2f01cd add optics uncertainties
+15b8aac add optics uncertainties
+c294c2f new program to evaluate the optics perturbations
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+nothing to commit (use -u to show untracked files)
+
+-------------------- high beta --------------------
+
+* recent commits: 
+60bbdd2 update
+da1b0c0 add background estimation
+2360980 add background-uncertainty data
+7ad4442 update
+dd06faf add script to extract background uncertainty input
+
+* status: 
+On branch 4rp
+Your branch is up to date with 'origin/4rp'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   debug/fit_B.cc
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+-------------------- import --------------------
+* sb1
+* sb2
+* sb3
