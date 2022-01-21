@@ -3,8 +3,7 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-//string version = "iv4-2_v1";
-string version = "TEST";
+string version = "iv5-2_v1";
 
 string types[], t_steps[][];
 types.push("HighBeta-single-nuis-0.020"); t_steps.push(new string[] {""});
