@@ -23,6 +23,23 @@ void PrintUsage()
 
 //----------------------------------------------------------------------------------------------------
 
+void ImportUncertainties(TFile *f_in, const string &binning)
+{
+	f_in->Get(("matrices/all-but-norm/" + binning + "/cov_mat").c_str())->Write("m_dsdt_rel_syst");
+	f_in->Get(("matrices/all-but-norm/" + binning + "/h_stddev").c_str())->Write("h_dsdt_rel_syst");
+
+	gDirectory = gDirectory->mkdir("modes");
+
+	TDirectory *d_modes = (TDirectory *) f_in->GetDirectory("modes");
+	if (!d_modes)
+		return;
+
+	for (const auto &k : *d_modes->GetListOfKeys())
+		d_modes->Get((k->GetName() + string("/") + binning + "/h").c_str())->Write(k->GetName());
+}
+
+//----------------------------------------------------------------------------------------------------
+
 int main(int argc, const char **argv)
 {
 	// defaults
@@ -93,13 +110,11 @@ int main(int argc, const char **argv)
 
 		gDirectory = d_binning->mkdir("low_beta");
 		f_hist_low_beta->Get((binning + "/merged/combined/h_dsdt").c_str())->Write("h_dsdt_cen_stat");
-		f_unc_low_beta->Get(("matrices/all-but-norm/" + binning + "/cov_mat").c_str())->Write("m_dsdt_rel_syst");
-		f_unc_low_beta->Get(("matrices/all-but-norm/" + binning + "/h_stddev").c_str())->Write("h_dsdt_rel_syst");
+		ImportUncertainties(f_unc_low_beta, binning);
 
 		gDirectory = d_binning->mkdir("high_beta");
 		f_hist_high_beta->Get((binning + "/merged/combined/h_dsdt").c_str())->Write("h_dsdt_cen_stat");
-		f_unc_high_beta->Get(("matrices/all-but-norm/" + binning + "/cov_mat").c_str())->Write("m_dsdt_rel_syst");
-		f_unc_high_beta->Get(("matrices/all-but-norm/" + binning + "/h_stddev").c_str())->Write("h_dsdt_rel_syst");
+		ImportUncertainties(f_unc_high_beta, binning);
 	}
 
 	// clean up
