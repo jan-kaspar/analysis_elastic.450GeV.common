@@ -13,8 +13,10 @@
 
 plots.local
 
+TODO
 compile_commands.json
 makefile
+test_make_fit
 
 !.clang-format
 !.clang-tidy

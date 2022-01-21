@@ -3,16 +3,20 @@ import pad_layout;
 include "../common.asy";
 //include "shared.asy";
 
-string version = "iv3-2_v1";
+//string version = "iv4-2_v1";
+string version = "TEST";
 
 string types[], t_steps[][];
-types.push("HighBeta-single-0.015"); t_steps.push(new string[] {""});
-types.push("HighBeta-single-0.020"); t_steps.push(new string[] {""});
+//types.push("HighBeta-single-0.015"); t_steps.push(new string[] {""});
+//types.push("HighBeta-single-0.020"); t_steps.push(new string[] {""});
 //types.push("HighBeta-3-single-0.020"); t_steps.push(new string[] {""});
 
 //types.push("HighBeta-sequence-0.005-0.020"); t_steps.push(new string[] {"_step_a", "_step_b", "_step_c"});
 
 //types.push("BothBetas-single"); t_steps.push(new string[] {""});
+
+types.push("HighBeta-single-nuis-0.020"); t_steps.push(new string[] {""});
+types.push("HighBeta-single-nuis-0.020-fix-b1"); t_steps.push(new string[] {""});
 
 string fit_iteration = "iteration 2";
 
@@ -152,7 +156,7 @@ void DrawOne(string fit_file, real t_min, real t_max, real x_size)
 		{
 			draw(g_data_t_unc, "p", p);
 			draw(g_data_dsdt_unc_stat, "p", p);
-			DrawSystematics(g_data_t_unc, g_data_dsdt_unc_syst, p);
+			//DrawSystematics(g_data_t_unc, g_data_dsdt_unc_syst, p);
 
 			AddToLegend(replace(datasets[dsi], "_", " "), p);
 		}
@@ -200,7 +204,7 @@ void DrawOneRelative(string fit_file, real t_min, real t_max, real x_size)
 				real t_repr = ax[0];
 				real dsdt_unc_stat = g_data_dsdt_unc_stat.rExec("GetErrorY", i);
 
-				real dsdt_unc_syst = g_data_dsdt_unc_syst.rExec("GetErrorY", i);
+				real dsdt_unc_syst = 0.;//g_data_dsdt_unc_syst.rExec("GetErrorY", i);
 
 				real dsdt_ref = g_fit_CH.rExec("Eval", t_repr);
 
