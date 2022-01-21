@@ -5,7 +5,7 @@ make -j8 || exit 1
 # defaults
 input="version_4-2"
 output="iv4-2_v1"
-fit_types="HighBeta-single-0.015 HighBeta-single-0.020 HighBeta-sequence-0.005-0.020 BothBetas-single"
+fit_types="HighBeta-single-0.015 HighBeta-single-0.020 HighBeta-single-nuis-0.020 HighBeta-single-nuis-0.020-fix-b1 HighBeta-sequence-0.005-0.020 BothBetas-single"
 #fit_types="HighBeta-3-single-0.020"
 #fit_types="HighBeta-sequence-0.005-0.020"
 

@@ -75,6 +75,24 @@ then
 	exit 0
 fi
 
+if [ "$fit_type" == "HighBeta-single-nuis-0.020" ]
+then
+	$BASE_DIR/.make_fit_nuis -input-file "$input" -input-datasets "high_beta" \
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" \
+		-t-max-high-beta 0.020 \
+			&> "$subdir/fit.log" || exit 10
+	exit 0
+fi
+
+if [ "$fit_type" == "HighBeta-single-nuis-0.020-fix-b1" ]
+then
+	$BASE_DIR/.make_fit_nuis -input-file "$input" -input-datasets "high_beta" \
+		-output-root "$subdir/fit.root" -output-results "$subdir/fit.results" \
+		-t-max-high-beta 0.020 -use-b1-fixed 1 -init-b1 8.5\
+			&> "$subdir/fit.log" || exit 10
+	exit 0
+fi
+
 if [ "$fit_type" == "HighBeta-3-single-0.020" ]
 then
 	$BASE_DIR/.make_fit -input-file "$input" -input-datasets "high_beta" \
