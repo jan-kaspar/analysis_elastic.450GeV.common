@@ -1,5 +1,5 @@
 // TODO: unify indexing rules in:
-//    * Metric::SetModelAndNuissanceParameters
+//    * Metric::SetModelAndNuisanceParameters
 //        - this should become member of Minimization ??
 //    * Minimization::Minimization
 //    * Minimization::GetResults
@@ -211,7 +211,7 @@ struct Dataset
 
 	vector<Mode> syst_modes;
 
-	vector<double> nuissance_parameters; // the same size an syst_modes
+	vector<double> nuisance_parameters; // the same size an syst_modes
 
 	Dataset(const string &_tag, const string &file, const string &directory, double t_min, double t_max);
 
@@ -284,7 +284,7 @@ Dataset::Dataset(const string &_tag, const string &file, const string &directory
 		syst_modes.push_back(move(sm));
 	}
 
-	nuissance_parameters.resize(syst_modes.size());
+	nuisance_parameters.resize(syst_modes.size());
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -427,7 +427,7 @@ struct Metric
 
 	Metric(Data &d, Model &m);
 
-	void SetModelAndNuissanceParameters(const double *par);
+	void SetModelAndNuisanceParameters(const double *par);
 
 	double CalculateChi2(bool debug) const;
 
@@ -442,7 +442,7 @@ Metric::Metric(Data &d, Model &m) : data(d), model(m)
 
 //----------------------------------------------------------------------------------------------------
 
-void Metric::SetModelAndNuissanceParameters(const double *par)
+void Metric::SetModelAndNuisanceParameters(const double *par)
 {
 	// NB: this method must remain synchronised with Minimization::Minimization 
 
@@ -465,16 +465,16 @@ void Metric::SetModelAndNuissanceParameters(const double *par)
 
 	model.hfm->p0 = M_PI/2 - atan(par[1 + model.n_b]);
 
-	// set nuissance parameters
+	// set nuisance parameters
 	unsigned int offset = 2 + model.n_b;
 	for (auto &d : data.datasets)
 	{
-		const auto n_nuissance_parameters = d.nuissance_parameters.size();
+		const auto n_nuisance_parameters = d.nuisance_parameters.size();
 
-		for (unsigned int q = 0; q < n_nuissance_parameters; ++q)
-			d.nuissance_parameters[q] = par[offset + q];
+		for (unsigned int q = 0; q < n_nuisance_parameters; ++q)
+			d.nuisance_parameters[q] = par[offset + q];
 
-		offset += n_nuissance_parameters;
+		offset += n_nuisance_parameters;
 	}
 }
 
@@ -494,8 +494,8 @@ double Metric::CalculateChi2(bool debug) const
 		{
 			diff[i] = d.bins[i].dsdt - model.Eval(d.bins[i].t_repr);
 
-			for (unsigned int q = 0; q < d.nuissance_parameters.size(); ++q)
-				diff[i] += d.nuissance_parameters[q] * d.syst_modes[q].abs[i];
+			for (unsigned int q = 0; q < d.nuisance_parameters.size(); ++q)
+				diff[i] += d.nuisance_parameters[q] * d.syst_modes[q].abs[i];
 		}
 
 		// calculate sum of squares
@@ -516,15 +516,15 @@ double Metric::CalculateChi2(bool debug) const
 			}
 		}
 
-		// add nuissance parameter constraints
-		for (unsigned int idx = 0; idx < d.nuissance_parameters.size(); ++idx)
+		// add nuisance parameter constraints
+		for (unsigned int idx = 0; idx < d.nuisance_parameters.size(); ++idx)
 		{
-			const double c = pow(d.nuissance_parameters[idx], 2);	// expected mean 0 and sigma 1
+			const double c = pow(d.nuisance_parameters[idx], 2);	// expected mean 0 and sigma 1
 			s2 += c;
 
 			if (debug)
-				printf("    %s, nuissance parameter %u: value = %.3f --> c = %.2E\n", d.tag.c_str(), idx,
-					d.nuissance_parameters[idx], c);
+				printf("    %s, nuisance parameter %u: value = %.3f --> c = %.2E\n", d.tag.c_str(), idx,
+					d.nuisance_parameters[idx], c);
 		}
 	}
 
@@ -535,7 +535,7 @@ double Metric::CalculateChi2(bool debug) const
 
 double Metric::operator() (const double *par)
 {
-	SetModelAndNuissanceParameters(par);
+	SetModelAndNuisanceParameters(par);
 
 	return CalculateChi2(false);
 }
@@ -590,11 +590,11 @@ struct Minimization
 Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialSettings &is) : data(da), model(mo), metric(me)
 {
 	// get total number of parameters to be optimised
-	unsigned int n_nuissance_parameters = 0;
+	unsigned int n_nuisance_parameters = 0;
 	for (const auto &d : data.datasets)
-		n_nuissance_parameters += d.nuissance_parameters.size();
+		n_nuisance_parameters += d.nuisance_parameters.size();
 
-	n_minimized_parameters = model.n_fit_parameters + n_nuissance_parameters;
+	n_minimized_parameters = model.n_fit_parameters + n_nuisance_parameters;
 
 	// initialize fitter
 	double pStart[n_minimized_parameters];
@@ -633,7 +633,7 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 			cp.Fix();
 	}
 
-	// initialise nuissance parameters
+	// initialise nuisance parameters
 	{
 		unsigned int idx = model.n_b + 2;
 
@@ -654,7 +654,7 @@ Minimization::Minimization(const Data &da, Model &mo, Metric &me, const InitialS
 	for (unsigned int i = 0; i < model.n_fit_parameters; ++i)
 		par[i] = fitter.Config().ParamsValues()[i];
 
-	metric.SetModelAndNuissanceParameters(par);
+	metric.SetModelAndNuisanceParameters(par);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -713,7 +713,7 @@ Result Minimization::GetResults() const
 	r.Set("si_tot", si_tot);
 	r.Set("si_tot_unc", si_tot_unc);
 
-	// nuissance parameters
+	// nuisance parameters
 	unsigned int idx_glb = 2 + model.n_b;
 	for (unsigned int dsi = 0; dsi < data.datasets.size(); ++dsi)
 	{
@@ -779,7 +779,7 @@ void Minimization::ResultToModel()
 	for (unsigned int i = 0; i < result.NPar(); ++i)
 		par[i] = result.Parameter(i);
 
-	metric.SetModelAndNuissanceParameters(par);
+	metric.SetModelAndNuisanceParameters(par);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -806,8 +806,8 @@ void Minimization::WriteGraphs() const
 		for (unsigned int bi = 0; bi < ds.bins.size(); ++bi)
 		{
 			double syst_eff = 0;
-			for (unsigned int q = 0; q < ds.nuissance_parameters.size(); ++q)
-				syst_eff += ds.nuissance_parameters[q] * ds.syst_modes[q].abs[bi];
+			for (unsigned int q = 0; q < ds.nuisance_parameters.size(); ++q)
+				syst_eff += ds.nuisance_parameters[q] * ds.syst_modes[q].abs[bi];
 
 			const double diff = ds.bins[bi].dsdt + syst_eff - model.Eval(ds.bins[bi].t_repr);
 
