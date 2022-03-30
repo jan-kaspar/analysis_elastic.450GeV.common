@@ -110,7 +110,7 @@ The full simulation chain is executed with
 ```
 ./run_simu_chain
 ```
-Add `--help` flag to get the usage hint: you can specify the number of repetitions, the error model, the input dsigma/dt model, etc.
+Add `--help` flag to get the usage hint: you can specify the number of repetitions, the error model, the input dsigma/dt model, etc. The output is saved under `data/simu/<version>`. The subsequent directory structure is `<dsigma/dt model>/<error model>`. For each fit type there is one ROOT file `process_fits_<fit type>.root`. This file contains, for each fit quantity, a histogram `h_diff` of the differences fit results - true value.
 
 # Plots
 
