@@ -9,7 +9,7 @@
 
 function FixmeCheck()
 {
-	output=`grep -RlI "FIXME" . 2> /dev/null  | grep -v "OLD\|.git\|.tex\|.log\|test/run_test"`
+	output=`grep -RlI "FIXME" . 2> /dev/null  | grep -v "OLD\|.git\|.tex\|.log\|test/run_test\|README"`
 	if [ -n "$output" ]
 	then
 		echo "There are FIXMEs in the code."
